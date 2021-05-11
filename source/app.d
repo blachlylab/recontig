@@ -1,17 +1,23 @@
 import std.stdio;
-import std.utf : toUTFz;
 import std.getopt;
 import std.conv : to;
-import dhtslib.vcf;
-import htslib.vcf;
+
 import mapping;
+import vcf;
+
+enum InputFileType
+{
+	vcf,
+	bam,
+	sam,
+	bcf,
+	bed,
+	gff
+}
 
 string build;
 string conversion;
-string type;
-
-// dhtslib's version of this function isn't correctly bound
-extern (C) int bcf_hrec_set_val(bcf_hrec_t *hrec, int i, const(char) *str, size_t len, int is_quoted);
+InputFileType type;
 
 void main(string[] args)
 {
@@ -44,52 +50,22 @@ void main(string[] args)
 	}
 	if(!convFound) throw new Exception("Please use a valid conversion: " ~ CONVERSIONS[buildIdx].to!string);
 
-	// get mapping
-	auto mapping = getContigMapping(build, conversion);
-
-	// open reader
-	auto vcfr = VCFReader(args[1]);
-
-	// get headers
-	auto oldHeader = vcfr.getHeader;
-	auto newHeader = VCFHeader(bcf_hdr_dup(oldHeader.hdr));
-	// clean new header
-	bcf_hdr_remove(newHeader.hdr, BCF_HL_CTG, null);
-	foreach (ctg; oldHeader.sequences)
+	switch(type)
 	{
-		// if no mapping, skip
-		if(mapping[ctg] == "") continue;
-
-		// get header record for contig
-		auto hdrRec = bcf_hrec_dup(bcf_hdr_get_hrec(oldHeader.hdr, BCF_HL_CTG, toUTFz!(const(char) *)("ID"), toUTFz!(const(char) *)(ctg), null));
-
-		// get ID key and set value to new contig mapping
-		auto key = bcf_hrec_find_key(hdrRec, toUTFz!(const(char) *)("ID"));
-		if(key == -1) throw new Exception("hdr_hrec_find_key failed");
-		auto err = bcf_hrec_set_val(hdrRec, key, toUTFz!(const(char) *)(mapping[ctg]), mapping[ctg].length, 0);
-		if(err == -1) throw new Exception("hdr_hrec_set_value failed");
-
-		// add new record to new header
-		bcf_hdr_add_hrec(newHeader.hdr, hdrRec);
+		case InputFileType.vcf:
+		case InputFileType.bcf:
+			recontigVCF(args, build, conversion);
+			break;
+		case InputFileType.gff:
+		case InputFileType.bed:
+		case InputFileType.bam:
+		case InputFileType.sam:
+			stderr.writeln("Error: Filetype not supported yet.");
+			return;
+		default:
+			stderr.writeln("Error: Filetype not supported.");
+			return;
 	}
 
-	// sync header
-	bcf_hdr_sync(newHeader.hdr);
-
-	// make vcfwriter and write header
-	auto vcfw = VCFWriter("-", &newHeader);
-	vcfw.writeHeader;
-
-	// loop over records from reader
-	foreach (rec; vcfr)
-	{
-		// if chrom not in mapping, skip
-		if(mapping[rec.chrom] == "") continue;
-
-		// get old chrom, set new header, remap, and write
-		auto oldchrom = rec.chrom;
-		rec.vcfheader = vcfw.getHeader;
-		rec.chrom = mapping[oldchrom];
-		vcfw.writeRecord(rec);
-	}
+	
 }
