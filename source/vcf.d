@@ -1,6 +1,7 @@
 module vcf;
 
 import std.utf : toUTFz;
+import std.format : format;
 
 import dhtslib.vcf;
 import htslib.vcf;
@@ -46,6 +47,14 @@ void recontigVCF(string[] args, string build, string conversion)
 
 	// make vcfwriter and write header
 	auto vcfw = VCFWriter("-", &newHeader);
+    if(oldHeader.sequences.length == 0)
+    {
+        foreach (ctg; mapping.byValue)
+        {
+            if(ctg == "") continue;
+            vcfw.addHeaderLineRaw("##contig=<ID=%s>".format(ctg));
+        }
+    }
 	vcfw.writeHeader;
 
 	// loop over records from reader
