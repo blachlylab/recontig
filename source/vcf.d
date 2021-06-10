@@ -8,16 +8,14 @@ import htslib.vcf;
 import mapping;
 
 
-// dhtslib's version of this function isn't correctly bound
-extern (C) int bcf_hrec_set_val(bcf_hrec_t *hrec, int i, const(char) *str, size_t len, int is_quoted);
-
-void recontigVCF(string[] args, string build, string conversion)
+void recontigVCF(string fn, string ejectedfn, string[string] mapping, string argStr = "")
 {
     // get mapping
-	auto mapping = getContigMapping(build, conversion);
+	// auto mapping = getContigMapping(build, conversion);
 
 	// open reader
-	auto vcfr = VCFReader(args[1]);
+	auto vcfr = VCFReader(fn);
+	auto ejectedvcfw = VCFWriter(ejectedfn, vcfr.getHeader);
 
 	// get headers
 	auto oldHeader = vcfr.getHeader;
@@ -56,17 +54,19 @@ void recontigVCF(string[] args, string build, string conversion)
         }
     }
 	vcfw.writeHeader;
+	ejectedvcfw.writeHeader;
 
 	// loop over records from reader
 	foreach (rec; vcfr)
 	{
 		// if chrom not in mapping, skip
-		if(!(rec.chrom in mapping)) continue;
-
-		// get old chrom, set new header, remap, and write
-		auto oldchrom = rec.chrom;
-		rec.vcfheader = vcfw.getHeader;
-		rec.chrom = mapping[oldchrom];
-		vcfw.writeRecord(rec);
+		if(!(rec.chrom in mapping)) ejectedvcfw.writeRecord(rec);
+		else{
+			// get old chrom, set new header, remap, and write
+			auto oldchrom = rec.chrom;
+			rec.vcfheader = vcfw.getHeader;
+			rec.chrom = mapping[oldchrom];
+			vcfw.writeRecord(rec);
+		}
 	}
 }
