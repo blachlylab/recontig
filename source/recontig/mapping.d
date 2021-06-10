@@ -1,4 +1,4 @@
-module mapping;
+module recontig.mapping;
 
 import dhtslib.bgzf;
 import std.array : split;
