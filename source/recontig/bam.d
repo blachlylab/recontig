@@ -16,7 +16,7 @@ alias recontigSam = recontigBamImpl!false;
 /// recontig BAM/SAM file
 /// makes edits to header SQ records
 /// changes bam1_t tid and mate tid to reflect new contig names
-void recontigBamImpl(bool outputBam)(string fn, string ejectedfn, string[string] mapping, string argStr = "")
+void recontigBamImpl(bool outputBam)(string fn, string ejectedfn, string[string] mapping, string argStr)
 {
     // Open new bam readers
     auto bamr = SAMReader(fn);
