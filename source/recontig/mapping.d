@@ -64,7 +64,7 @@ string[][] CONVERSIONS = [
     ["UCSC2ensembl", "ensembl2UCSC"], //rn5
 ];
 
-auto getContigMappingFile(string build, string conversion)
+auto getDpryan79ContigMappingFile(string build, string conversion)
 {
     return BGZFile(
         "https://raw.githubusercontent.com/dpryan79/ChromosomeMappings/master/" ~
@@ -72,10 +72,9 @@ auto getContigMappingFile(string build, string conversion)
         );
 }
 
-auto getContigMapping(string build, string conversion)
+auto getContigMapping(BGZFile file)
 {
     string[string] mapping;
-    auto file = getContigMappingFile(build, conversion);
     foreach (line; file.byLineCopy)
     {
         auto fields = line.split("\t");

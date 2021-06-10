@@ -3,6 +3,7 @@ import std.getopt;
 import std.conv : to;
 import std.array : join;
 
+import dhtslib.bgzf;
 import recontig;
 
 enum InputFileType
@@ -19,15 +20,16 @@ string build;
 string conversion;
 InputFileType type;
 string ejectedfn;
-string mappingFile;
+string mappingfn;
 
 void main(string[] args)
 {
 	auto clstr = args.join(" ");
 	auto res = getopt(args, 
-			config.required, "build|b","Genome build i.e GRCh37", &build, 
-			config.required, "conversion|c", "Conversion string i.e UCSC2ensembl", &conversion,
 			config.required, "file-type|f", "Type of file to convert i.e vcf", &type,
+			"build|b","Genome build i.e GRCh37 for using dpryan79's files", &build, 
+			"conversion|c", "Conversion string i.e UCSC2ensembl for using dpryan79's files", &conversion,
+			"mapping", "If want to use your own remapping file instead of dpryan79's", &mappingfn,
 			"ejected-output", "File to write ejected records to (records with unmapped contigs)", &ejectedfn
 		);
 	if (res.helpWanted | (args.length < 2))
@@ -38,21 +40,7 @@ void main(string[] args)
 		return;
 	}
 	
-	// validate build
-	bool buildFound;
-	ulong buildIdx = 0;
-	foreach(i, b;BUILDS){
-		if(b == build) buildFound = true, buildIdx = i;
-	}
-	if(!buildFound) throw new Exception("Please use a valid build: " ~ BUILDS.to!string);
-
-	//validate conversion
-	bool convFound;
-	ulong convIdx = 0;
-	foreach(i, c;CONVERSIONS[buildIdx]){
-		if(c == conversion) convFound = true, convIdx = i;
-	}
-	if(!convFound) throw new Exception("Please use a valid conversion: " ~ CONVERSIONS[buildIdx].to!string);
+	/// if no ejected filename provided we will select a default name
 	if(ejectedfn == "")
 	{
 		switch(type)
@@ -77,8 +65,43 @@ void main(string[] args)
 		}
 	}
 
-	auto mapping = getContigMapping(build, conversion);
+	/// if a mapping file is provided load it 
+	/// else get a dpryan79 file
+	BGZFile mappingFile;
+	if(mappingfn != "") mappingFile = BGZFile(mappingfn);
+	else{
+		if(build =="" || conversion == ""){
+			stderr.writeln("Error: if not using a mapping file you must provide a valid build and conversion.");
+			return;
+		}
+		// validate build
+		bool buildFound;
+		ulong buildIdx = 0;
+		foreach(i, b;BUILDS){
+			if(b == build) buildFound = true, buildIdx = i;
+		}
+		if(!buildFound){
+			stderr.writeln("Error: Please use a valid build: " ~ BUILDS.to!string);
+			return;
+		}
 
+		//validate conversion
+		bool convFound;
+		ulong convIdx = 0;
+		foreach(i, c;CONVERSIONS[buildIdx]){
+			if(c == conversion) convFound = true, convIdx = i;
+		}
+		if(!convFound){
+			stderr.writeln("Error: Please use a valid conversion: " ~ CONVERSIONS[buildIdx].to!string);
+			return;
+		}
+		mappingFile = getDpryan79ContigMappingFile(build, conversion);
+	}
+
+	/// load mapping
+	auto mapping = getContigMapping(mappingFile);
+
+	/// lets recontig
 	switch(type)
 	{
 		case InputFileType.vcf:
