@@ -1,15 +1,19 @@
-module gff;
+module recontig.gff;
 
 import dhtslib.gff;
+import recontig : HEADER_MOD;
 
-void recontigGFF(string fn, string ejectedfn, string[string] mapping, string argStr = "")
+void recontigGff(string fn, string ejectedfn, string[string] mapping, string argStr)
 {
     // get mapping
 	// auto mapping = getContigMapping(build, conversion);
 
 	// open reader
 	auto gffr = GFF2Reader(fn);
-    auto gffw = GFF2Writer("-", gffr.header);
+    string header;
+    if(gffr.header == "") header = HEADER_MOD ~ argStr;
+    else header = gffr.header ~ "\n" ~ HEADER_MOD ~ argStr;
+    auto gffw = GFF2Writer("-", header);
     auto ejectedgffw = GFF2Writer(ejectedfn, gffr.header);
 
     foreach (GFF2Record rec; gffr)

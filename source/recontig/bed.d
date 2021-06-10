@@ -1,15 +1,19 @@
-module bed;
+module recontig.bed;
 
 import dhtslib.bed;
+import recontig : HEADER_MOD;
 
-void recontigBed(string fn, string ejectedfn, string[string] mapping, string argStr = "")
+void recontigBed(string fn, string ejectedfn, string[string] mapping, string argStr)
 {
     // get mapping
 	// auto mapping = getContigMapping(build, conversion);
 
 	// open reader
 	auto bedr = BedReader(fn);
-    auto bedw = BedWriter("-", bedr.header);
+    string header;
+    if(bedr.header == "") header = HEADER_MOD ~ argStr;
+    else header = bedr.header ~ "\n" ~ HEADER_MOD ~ argStr;
+    auto bedw = BedWriter("-", header);
     auto ejectedbedw = BedWriter(ejectedfn, bedr.header);
 
     foreach (BedRecord rec; bedr)
