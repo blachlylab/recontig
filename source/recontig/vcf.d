@@ -1,14 +1,13 @@
-module vcf;
+module recontig.vcf;
 
 import std.utf : toUTFz;
 import std.format : format;
 
 import dhtslib.vcf;
 import htslib.vcf;
-import mapping;
 
 
-void recontigVCF(string fn, string ejectedfn, string[string] mapping, string argStr = "")
+void recontigVcf(string fn, string ejectedfn, string[string] mapping, string argStr)
 {
     // get mapping
 	// auto mapping = getContigMapping(build, conversion);
@@ -53,6 +52,8 @@ void recontigVCF(string fn, string ejectedfn, string[string] mapping, string arg
             vcfw.addHeaderLineRaw("##contig=<ID=%s>".format(ctg));
         }
     }
+	vcfw.addHeaderLineRaw("##source=recontig");
+	vcfw.addHeaderLineRaw("##recontigCMD=<ID=recontig,VERSION=1.0.0,CMDLINE=\"%s\">".format(argStr));
 	vcfw.writeHeader;
 	ejectedvcfw.writeHeader;
 

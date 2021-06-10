@@ -39,7 +39,7 @@ void recontigBamImpl(bool outputBam)(string fn, string ejectedfn, string[string]
         newHeader.addLine(RecordType.SQ, "SN", mapping[contig], "LN", lengths[i].to!string);
     }
     // add PG record
-    newHeader.addLine(RecordType.PG, "ID", "recontig", "PN", "recontig", "VN", "alpha", "CL", argStr);
+    newHeader.addLine(RecordType.PG, "ID", "recontig", "PN", "recontig", "VN", "1.0.0", "CL", argStr);
 
     // set writer
     static if(outputBam) auto bamw =  SAMWriter("-",newHeader,SAMWriterTypes.BAM);
