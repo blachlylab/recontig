@@ -13,3 +13,8 @@ recontig-test-*
 *.o
 *.obj
 *.lst
+*.vcf
+*.sam
+*.txt
+*.bed
+dub.selections.json
