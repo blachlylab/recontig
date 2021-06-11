@@ -1,0 +1,3 @@
+[submodule "dhtslib"]
+	path = dhtslib
+	url = https://github.com/blachlylab/dhtslib.git
