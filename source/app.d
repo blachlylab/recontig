@@ -79,6 +79,15 @@ int main(string[] args)
 		return 0;
 	}
 
+	if(args[1] == "make-mapping"){
+		if(args.length != 4){
+			stderr.writeln("Error: Need two fastas to make mapping file");
+			return 1;
+		}
+		makeMapping(args[2], args[3]);
+		return 0;
+	}
+
 	if (type == InputFileType.None)
 	{
 		defaultGetoptPrinter("Error: -f or --file-type is required.\n" ~ HELP,
