@@ -5,8 +5,10 @@
 	"copyright": "Copyright © 2021, Charles Gregory",
 	"dependencies": {
 		"dhtslib": {
-			"path": "dhtslib"
-		}
+			"path": "dhtslib",
+			"version": ">=0.0.0"
+		},
+		"pyd": "~>0.14.1"
 	},
 	"description": "Uses dpryan79's chromosome mappings to convert contig names",
 	"license": "MIT",

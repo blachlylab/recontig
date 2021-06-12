@@ -14,8 +14,9 @@ htslibVersion = "1.12"
 # default htslib path is local
 htslibLocalPath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"htslib-{}".format(htslibVersion))
 
-SHARED_EXT = distutils.ccompiler.new_compiler().shared_lib_extension
-
+SHARED_EXT = ".so"
+if sys.platform == "darwin":
+    SHARED_EXT = ".dylib"
 # download htslib from github
 def getHtslib():
     sys.stdout.flush()
@@ -95,6 +96,7 @@ def buildHtslib():
 def checkForHtslibSharedLibraries(dir):
     # check for libhts.dylib or libhts.so
     if not os.path.exists(os.path.join(dir,"libhts" + SHARED_EXT)):
+        print(os.path.join(dir,"libhts" + SHARED_EXT))
         return False
     # check for libhts.3.dylib
     if not os.path.exists(os.path.join(dir,"libhts" + ".3" + SHARED_EXT)):
