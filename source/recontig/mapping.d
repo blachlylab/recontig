@@ -12,6 +12,8 @@ import dhtslib.faidx;
 import dhtslib.coordinates;
 import htslib.hts : seq_nt16_table, seq_nt16_int;
 
+import pyd.pyd;
+
 /// Builds specified on dpryan79's ChromosomeMappings github
 string[] BUILDS = [
     "BDGP6",
@@ -75,26 +77,32 @@ string[][] CONVERSIONS = [
     ["UCSC2ensembl", "ensembl2UCSC"], //rn5
 ];
 
-
-/// download a mapping from dpryan79's ChromosomeMappings github
-auto getDpryan79ContigMappingFile(string build, string conversion)
-{
-    return BGZFile(
-        "https://raw.githubusercontent.com/dpryan79/ChromosomeMappings/master/" ~
-        build ~ "_" ~ conversion ~ ".txt"
-        );
+class getdpyryan {
+    string build;
+    string conversion;
+    /// download a mapping from dpryan79's ChromosomeMappings github
+    auto getDpryan79ContigMappingFile(string build, string conversion)
+    {
+        return BGZFile(
+            "https://raw.githubusercontent.com/dpryan79/ChromosomeMappings/master/" ~
+            build ~ "_" ~ conversion ~ ".txt"
+            );
+    }
 }
 
-/// load a contig mapping file
-auto getContigMapping(BGZFile file)
-{
-    string[string] mapping;
-    foreach (line; file.byLineCopy)
+class getmapping{
+    BGZFile file;
+    /// load a contig mapping file
+    auto getContigMapping(BGZFile file)
     {
-        auto fields = line.split("\t");
-        mapping[fields[0]] = fields[1];
+        string[string] mapping;
+        foreach (line; file.byLineCopy)
+        {
+            auto fields = line.split("\t");
+            mapping[fields[0]] = fields[1];
+        }
+        return mapping;
     }
-    return mapping;
 }
 
 /// make a contig mapping file from two faidx'd fasta files

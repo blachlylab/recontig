@@ -29,10 +29,8 @@ string HELP =
 "recontig: remap contig names for different bioinformatics file types.
                 
 usage: recontig [-e ejected.txt] [-m mapping.txt | -b build -c conversion] <in.file>
-
 Input can be any of the following formats: vcf, bcf, bam, sam, bed, gff              
 Input can be compressed with gzip or bgzf and can be accessed remotely via https or s3 (see htslib for details).
-
 use 'recontig build-help' to check availiable builds                                 
 use 'recontig -b build' conversion-help to check availiable conversions for a build
 ";

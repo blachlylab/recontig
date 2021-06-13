@@ -10,9 +10,19 @@ import pyd.pyd;
 
 enum HEADER_MOD = "# contig names remapped with recontig version 1.0.0. cmd: ";
 
-extern (C) void PydMain(){
+extern(C) void PydMain() {
     def!(recontigVcf)();
-    def!(getDpryan79ContigMappingFile)();
-    def!(getContigMapping)();
-    module_init();
+    def!(recontigBed)();
+    def!(recontigGff)();
+    def!(recontigBam)();
+	module_init();
+	wrap_class!(
+		getdpyryan,
+		Property!(getdpyryan.build),
+        Property!(getdpyryan.conversion)
+	);
+    wrap_class!(
+		getmapping,
+		Property!(getmapping.file)
+	);
 }
