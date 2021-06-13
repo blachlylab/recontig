@@ -15,14 +15,7 @@ extern(C) void PydMain() {
     def!(recontigBed)();
     def!(recontigGff)();
     def!(recontigBam)();
+    def!(getContigMapping)();
+    def!(getDpryan79ContigMapping)();
 	module_init();
-	wrap_class!(
-		getdpyryan,
-		Property!(getdpyryan.build),
-        Property!(getdpyryan.conversion)
-	);
-    wrap_class!(
-		getmapping,
-		Property!(getmapping.file)
-	);
 }

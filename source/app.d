@@ -118,10 +118,11 @@ int main(string[] args)
 		}
 	}
 
+	/// load mapping
 	/// if a mapping file is provided load it 
 	/// else get a dpryan79 file
-	BGZFile mappingFile;
-	if(mappingfn != "") mappingFile = BGZFile(mappingfn);
+	string[string] mapping;
+	if(mappingfn != "") mapping = getContigMapping(mappingfn);
 	else{
 		if(build =="" || conversion == ""){
 			stderr.writeln("Error: if not using a mapping file you must provide a valid build and conversion.");
@@ -148,11 +149,9 @@ int main(string[] args)
 			stderr.writeln("Error: Please use a valid conversion: " ~ CONVERSIONS[buildIdx].to!string);
 			return 1;
 		}
-		mappingFile = getDpryan79ContigMappingFile(build, conversion);
+		mapping = getDpryan79ContigMapping(build, conversion);
 	}
-
-	/// load mapping
-	auto mapping = getContigMapping(mappingFile);
+	
 
 	/// lets recontig
 	switch(type)

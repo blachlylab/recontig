@@ -77,32 +77,33 @@ string[][] CONVERSIONS = [
     ["UCSC2ensembl", "ensembl2UCSC"], //rn5
 ];
 
-class getdpyryan {
-    string build;
-    string conversion;
-    /// download a mapping from dpryan79's ChromosomeMappings github
-    auto getDpryan79ContigMappingFile(string build, string conversion)
-    {
-        return BGZFile(
-            "https://raw.githubusercontent.com/dpryan79/ChromosomeMappings/master/" ~
-            build ~ "_" ~ conversion ~ ".txt"
-            );
-    }
+
+/// download a mapping from dpryan79's ChromosomeMappings github
+auto getDpryan79ContigMapping(string build, string conversion)
+{
+    return BGZFile(
+        "https://raw.githubusercontent.com/dpryan79/ChromosomeMappings/master/" ~
+        build ~ "_" ~ conversion ~ ".txt"
+        ).convertMappingToHashMap;
+    
 }
 
-class getmapping{
-    BGZFile file;
-    /// load a contig mapping file
-    auto getContigMapping(BGZFile file)
+/// load a contig mapping file
+auto getContigMapping(string fn)
+{
+    return BGZFile(fn).convertMappingToHashMap;
+}
+
+/// load a contig mapping file into a hashmap
+private auto convertMappingToHashMap(BGZFile file)
+{
+    string[string] mapping;
+    foreach (line; file.byLineCopy)
     {
-        string[string] mapping;
-        foreach (line; file.byLineCopy)
-        {
-            auto fields = line.split("\t");
-            mapping[fields[0]] = fields[1];
-        }
-        return mapping;
+        auto fields = line.split("\t");
+        mapping[fields[0]] = fields[1];
     }
+    return mapping;
 }
 
 /// make a contig mapping file from two faidx'd fasta files
