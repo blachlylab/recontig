@@ -115,13 +115,13 @@ def main():
 
     # For given argument, run the conversion.
     if args.fileType == "vcf":
-        recontig.recontigVcf(args.filename,"ejected.vcf",{"1":"chr1"},"helpme")
+        recontig.recontigVcf(args.filename,name,{"1":"chr1"},"helpme")
     elif args.fileType == "bed":
-        recontig.recontigBed(args.filename,"ejected.bed",{"1":"chr1"},"helpme")
+        recontig.recontigBed(args.filename,name,{"1":"chr1"},"helpme")
     elif args.fileType == "bam":
-        recontig.recontigBam(args.filename,"ejected.bam",{"1":"chr1"},"helpme")
+        recontig.recontigBam(args.filename,name,{"1":"chr1"},"helpme")
     elif args.fileType == "gff":
-        recontig.recontigGff(args.filename,"ejected.gff",{"1":"chr1"},"helpme")
+        recontig.recontigGff(args.filename,name,{"1":"chr1"},"helpme")
 
 
 if __name__ == "__main__":
