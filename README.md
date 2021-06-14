@@ -9,9 +9,12 @@ Due to the divergence in reference naming standards in commonly needed file used
 
 ## Install and Setup
 ### Dependencies
-Install `CPython >=3.7` [here](https://www.python.org/downloads/) is it's not already on your system
+Install `CPython >=3.7` [here](https://www.python.org/downloads/) is it's not already on your system.
 
 [PyD](https://github.com/ariovistus/pyd) does not have shared library support for GDC, so it is recommended to install using `DMD` or `LDC fe2.065+`
+
+You will also need you install `wget` if it is not already. `pip3 install wget` should do this for you.
+
 To install *D* run the following command where every you with the dlang directory to reside. 
 ```
 mkdir -p ~/dlang && wget https://dlang.org/install.sh -O ~/dlang/install.sh
@@ -21,5 +24,28 @@ To activate if it is not already then type `~/dlang/install.sh install <compiler
 [dhtslib](https://github.com/blachlylab/dhtslib) must be installed as well as [htslilb](http://www.htslib.org/download/).
 
 Finally, PyD can be installed via pip `pip install pyd`.
-
+### Installing on Linux - Ubuntu
+Clone the repository via 
+```
+git clone --recurse-submodules https://github.com/blachlylab/recontig.git
+```
+If you already have htslib 1.12 installed on your system and on your path then you can run the following for good measure to build
+```
+LD_LIBRARY_PATH=$HOME/tools/htslib/ LIBRARY_PATH=$HOME/tools/htslib/ dub build
+```
+If not, then we have provided an install script that will install htslib on your system or check if it was provided if the user has proper system permissions to do so. We recommend running this with Dlang-ldc. 
+```
+python setup.py build -c ldc
+```
 ## Running recontig
+
+## Common Problems and solutions
+### Python versions
+Sometimes python 2 will be the default version to run on a system. This may be the case if you are recieving an error like:
+```
+Traceback (most recent call last):
+  File "setup.py", line 110, in <module>
+    dhtslibSources = glob.glob(os.path.join("dhtslib","source","**","*.d"), recursive=True)
+TypeError: glob() got an unexpected keyword argument 'recursive'
+```
+when running the `setup.py` as Recontig requires python 3.7 and greater. To solve this consider installing python 3 and setting to an alias like `alias python=python3`
