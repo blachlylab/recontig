@@ -7,6 +7,7 @@ import std.traits : EnumMembers;
 import std.algorithm : map;
 
 import dhtslib.bgzf;
+import htslib.hts_log;
 import recontig;
 
 enum InputFileType
@@ -25,6 +26,9 @@ string conversion;
 InputFileType type = InputFileType.None;
 string ejectedfn;
 string mappingfn;
+bool verbose;
+bool verbose2;
+bool quiet;
 string HELP =  
 "recontig: remap contig names for different bioinformatics file types.
                 
@@ -43,9 +47,15 @@ int main(string[] args)
 			"build|b","Genome build i.e GRCh37 for using dpryan79's files", &build, 
 			"conversion|c", "Conversion string i.e UCSC2ensembl for using dpryan79's files", &conversion,
 			"mapping|m", "If want to use your own remapping file instead of dpryan79's", &mappingfn,
-			"ejected-output|e", "File to write ejected records to (records with unmapped contigs)", &ejectedfn
+			"ejected-output|e", "File to write ejected records to (records with unmapped contigs)", &ejectedfn,
+			"verbose|v", "print extra information", &verbose,
+			"debug", "print extra debug information", &verbose2,
+			"quiet|q", "silence warnings", &quiet
 		);
-	
+	hts_set_log_level(htsLogLevel.HTS_LOG_WARNING);
+	if(quiet) hts_set_log_level(htsLogLevel.HTS_LOG_ERROR);
+	if(verbose) hts_set_log_level(htsLogLevel.HTS_LOG_INFO);
+	if(verbose2) hts_set_log_level(htsLogLevel.HTS_LOG_DEBUG);
 	if (res.helpWanted || (args.length < 2))
 	{
 		defaultGetoptPrinter(HELP,
@@ -61,7 +71,7 @@ int main(string[] args)
 	
 	if(args[1] == "conversion-help"){
 		if(build == ""){
-			stderr.writeln("Error: -b was not set. Need valid build to provide availiable conversions");
+			hts_log_error("recontig","Error: -b was not set. Need valid build to provide availiable conversions");
 			return 1;
 		}
 		bool buildFound;
@@ -70,7 +80,7 @@ int main(string[] args)
 			if(b == build) buildFound = true, buildIdx = i;
 		}
 		if(!buildFound){
-			stderr.writeln("Error: Please use a valid build: " ~ BUILDS.to!string);
+			hts_log_error("recontig","Error: Please use a valid build: " ~ BUILDS.to!string);
 			return 1;
 		}
 		stderr.writeln("Valid conversions for " ~ build ~ ": " ~ CONVERSIONS[buildIdx].to!string);
@@ -79,7 +89,7 @@ int main(string[] args)
 
 	if(args[1] == "make-mapping"){
 		if(args.length != 4){
-			stderr.writeln("Error: Need two fastas to make mapping file");
+			hts_log_error("recontig","Error: Need two fastas to make mapping file");
 			return 1;
 		}
 		makeMapping(args[2], args[3]);
@@ -113,7 +123,7 @@ int main(string[] args)
 				ejectedfn = "ejected.sam";
 				break;
 			default:
-				stderr.writeln("Error: Filetype not supported.");
+				hts_log_error("recontig","Error: Filetype not supported.");
 				return 1;
 		}
 	}
@@ -125,7 +135,7 @@ int main(string[] args)
 	if(mappingfn != "") mapping = getContigMapping(mappingfn);
 	else{
 		if(build =="" || conversion == ""){
-			stderr.writeln("Error: if not using a mapping file you must provide a valid build and conversion.");
+			hts_log_error("recontig","Error: if not using a mapping file you must provide a valid build and conversion.");
 			return 1;
 		}
 		// validate build
@@ -135,7 +145,7 @@ int main(string[] args)
 			if(b == build) buildFound = true, buildIdx = i;
 		}
 		if(!buildFound){
-			stderr.writeln("Error: Please use a valid build: " ~ BUILDS.to!string);
+			hts_log_error("recontig","Error: Please use a valid build: " ~ BUILDS.to!string);
 			return 1;
 		}
 
@@ -146,7 +156,7 @@ int main(string[] args)
 			if(c == conversion) convFound = true, convIdx = i;
 		}
 		if(!convFound){
-			stderr.writeln("Error: Please use a valid conversion: " ~ CONVERSIONS[buildIdx].to!string);
+			hts_log_error("recontig","Error: Please use a valid conversion: " ~ CONVERSIONS[buildIdx].to!string);
 			return 1;
 		}
 		mapping = getDpryan79ContigMapping(build, conversion);
@@ -173,7 +183,7 @@ int main(string[] args)
 			recontigSam(args[1], ejectedfn, mapping, clstr);
 			break;
 		default:
-			stderr.writeln("Error: Filetype not supported.");
+			hts_log_error("recontig","Error: Filetype not supported.");
 			return 1;
 	}
 	return 0;
