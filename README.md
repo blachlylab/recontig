@@ -3,6 +3,8 @@ Recontig
 
 [![linux ldc build](https://github.com/blachlylab/recontig/actions/workflows/dbuild-linux.yml/badge.svg)](https://github.com/blachlylab/recontig/actions/workflows/dbuild-linux.yml)
 [![macos ldc build](https://github.com/blachlylab/recontig/actions/workflows/dbuild-macos.yml/badge.svg)](https://github.com/blachlylab/recontig/actions/workflows/dbuild-macos.yml)
+[![linux pyd build](https://github.com/blachlylab/recontig/actions/workflows/pybuild-linux.yml/badge.svg)](https://github.com/blachlylab/recontig/actions/workflows/pybuild-linux.yml)
+
 Due to the divergence in reference naming standards in commonly needed file used in standard bioinformatics analysis, there's was a need for conversion of one database's convention to the other i.e UCSC to NCBI to gencode to ensembl. Use of databases that are siloed in their naming conventions such as dbsnp (NCBI) and gnomad (ensembl) can create downstream issues for workflows and analysis due to contig naming incompatibility. 
 
 *Recontig* fufills this need by providing fast conversion of NCBI, UCSC, Ensembl, and Gencode to the other. Recontig is written in *D* that relies on [dhtslib](https://github.com/blachlylab/dhtslib) - a collection of wrappers and bindings of htslib for the D language. Recontig utilizes the power and speed of dhtslib/htslib to convert contig names for `.vcf/.bcf`, `.bam/.sam`, `.gff2/.gff3`, and `.bed` file types. Headers and records are modified properly to specification with support for files compressed with bgzip, gzip, or remote files via http(s) or amazon s3.
