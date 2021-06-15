@@ -161,8 +161,8 @@ string recontigSamRecord(string samRec, string[string] mapping, string headerStr
     // if we can convert do it and write
     // else eject
     if(canConvert){
-        if(newContig != "") rec.tid = bamw.header.targetId(newContig);
-        if(newMateContig != "") rec.mateTID = bamw.header.targetId(newMateContig);
+        if(newContig != "") rec.tid = header.targetId(newContig);
+        if(newMateContig != "") rec.mateTID = header.targetId(newMateContig);
     }else{
         hts_log_error("recontig", "Error: contig %s not found in mapping".format(contigs[rec.tid]));
         return "";
