@@ -22,7 +22,7 @@ jobs:
 
       - name: Install htslib deps
         run: |
-            sudo apt-get install -y build-essential autoconf zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev libssl-dev python cython
+            sudo apt-get install -y build-essential autoconf zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev libssl-dev python cython pip
       - name: Get dhtslib commit
         id: get-dhtslib-commit
         run: echo "::set-output name=sha_short::$(git rev-parse --short :dhtslib)"
@@ -57,6 +57,8 @@ jobs:
             tabix bed_file.bed.gz
             bgzip -c vcf_file.vcf > vcf_file.vcf.gz
             tabix vcf_file.vcf.gz
+      - name: Install pyd
+        run: pip install pyd
       - name: Run tests
         run: |
             python setup.py build -c ldc
