@@ -30,11 +30,14 @@ string fileOut = "-";
 bool verbose;
 bool verbose2;
 bool quiet;
+int col;
+string delimiter;
 string HELP =  
 "recontig: remap contig names for different bioinformatics file types.
                 
-usage: recontig [-e ejected.txt] [-m mapping.txt | -b build -c conversion] <in.file>
-Input can be any of the following formats: vcf, bcf, bam, sam, bed, gff              
+usage: recontig [-e ejected.txt] [-o output] [-m mapping.txt | -b build -c conversion] [-f filetype | --col 1 --delimiter ','] <in.file>
+Input can be any of the following formats: vcf, bcf, bam, sam, bed, gff
+Input can also be a delimited record based file 
 Input can be compressed with gzip or bgzf and can be accessed remotely via https or s3 (see htslib for details).
 use 'recontig build-help' to check availiable builds                                 
 use 'recontig -b build' conversion-help to check availiable conversions for a build
@@ -45,6 +48,8 @@ int main(string[] args)
 	auto clstr = args.join(" ");
 	auto res = getopt(args, 
 			"file-type|f", "Type of file to convert (vcf, bcf, bam, sam, bed, gff)", &type,
+			"col", "if converting a generic file you can specify a column", &col,
+			"delimiter", "if converting a generic file you can specify a delimiter (default: '\\t')", &delimiter,
 			"build|b","Genome build i.e GRCh37 for using dpryan79's files", &build, 
 			"conversion|c", "Conversion string i.e UCSC2ensembl for using dpryan79's files", &conversion,
 			"mapping|m", "If want to use your own remapping file instead of dpryan79's", &mappingfn,
@@ -52,7 +57,7 @@ int main(string[] args)
 			"verbose|v", "print extra information", &verbose,
 			"debug", "print extra debug information", &verbose2,
 			"quiet|q", "silence warnings", &quiet,
-			"output|o", "name of file out (default is - for stdout)", &fileOut
+			"output|o", "name of file out (default is - for stdout)", &fileOut,
 		);
 	hts_set_log_level(htsLogLevel.HTS_LOG_WARNING);
 	if(quiet) hts_set_log_level(htsLogLevel.HTS_LOG_ERROR);
@@ -97,13 +102,6 @@ int main(string[] args)
 		makeMapping(args[2], args[3]);
 		return 0;
 	}
-
-	if (type == InputFileType.None)
-	{
-		defaultGetoptPrinter("Error: -f or --file-type is required.\n" ~ HELP,
-				res.options);
-		return 1;
-	}
 	
 	/// if no ejected filename provided we will select a default name
 	if(ejectedfn == "")
@@ -125,8 +123,7 @@ int main(string[] args)
 				ejectedfn = "ejected.sam";
 				break;
 			default:
-				hts_log_error("recontig","Error: Filetype not supported.");
-				return 1;
+				ejectedfn = "ejected.txt";
 		}
 	}
 
@@ -185,8 +182,12 @@ int main(string[] args)
 			recontigSam(args[1], ejectedfn, mapping, fileOut, clstr);
 			break;
 		default:
-			hts_log_error("recontig","Error: Filetype not supported.");
-			return 1;
+			if(col)
+				recontigGeneric(args[1], ejectedfn, col, mapping, fileOut, delimiter);
+			else{
+				hts_log_error("recontig","Error: Filetype must be specified or -c must be used for a generic file type.");
+				return 1;
+			}
 	}
 	return 0;
 }

@@ -6,10 +6,34 @@ public import recontig.gff;
 public import recontig.bam;
 public import recontig.mapping;
 
+import std.stdio;
 import std.array : split, join;
 import std.format : format;
 
 import htslib.hts_log;
+import dhtslib.bgzf;
+
+void recontigGeneric(string fn, string ejectedfn, int contigCol, string[string] mapping, string fileOut, string delimiter="\t")
+{
+    auto f = BGZFile(fn);
+    File output;
+    if(fileOut == "-"){
+        output = stdout;
+    }else{
+        output = File(fileOut, "w");
+    }
+    auto ejected = File(ejectedfn, "w");
+    foreach(line; f.byLineCopy){
+        auto fields = line.split(delimiter);
+        auto contig = fields[contigCol];
+        if(contig in mapping){
+            fields[contigCol] = mapping[contig];
+            output.writeln(fields.join(delimiter));
+        }else{
+            ejected.writeln(line);
+        }
+    }
+}
 
 string recontigLine(string line, int contigCol, string[string] mapping, string delimiter="\t")
 {
