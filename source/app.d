@@ -26,6 +26,7 @@ string conversion;
 InputFileType type = InputFileType.None;
 string ejectedfn;
 string mappingfn;
+string fileOut = "-";
 bool verbose;
 bool verbose2;
 bool quiet;
@@ -50,7 +51,8 @@ int main(string[] args)
 			"ejected-output|e", "File to write ejected records to (records with unmapped contigs)", &ejectedfn,
 			"verbose|v", "print extra information", &verbose,
 			"debug", "print extra debug information", &verbose2,
-			"quiet|q", "silence warnings", &quiet
+			"quiet|q", "silence warnings", &quiet,
+			"output|o", "name of file out (default is - for stdout)", &fileOut
 		);
 	hts_set_log_level(htsLogLevel.HTS_LOG_WARNING);
 	if(quiet) hts_set_log_level(htsLogLevel.HTS_LOG_ERROR);
@@ -168,19 +170,19 @@ int main(string[] args)
 	{
 		case InputFileType.vcf:
 		case InputFileType.bcf:
-			recontigVcf(args[1], ejectedfn, mapping, clstr);
+			recontigVcf(args[1], ejectedfn, mapping, fileOut, clstr);
 			break;
 		case InputFileType.gff:
-			recontigGff(args[1], ejectedfn, mapping, clstr);
+			recontigGff(args[1], ejectedfn, mapping, fileOut, clstr);
 			break;
 		case InputFileType.bed:
-			recontigBed(args[1], ejectedfn, mapping, clstr);
+			recontigBed(args[1], ejectedfn, mapping, fileOut, clstr);
 			break;
 		case InputFileType.bam:
-			recontigBam(args[1], ejectedfn, mapping, clstr);
+			recontigBam(args[1], ejectedfn, mapping, fileOut, clstr);
 			break;
 		case InputFileType.sam:
-			recontigSam(args[1], ejectedfn, mapping, clstr);
+			recontigSam(args[1], ejectedfn, mapping, fileOut, clstr);
 			break;
 		default:
 			hts_log_error("recontig","Error: Filetype not supported.");

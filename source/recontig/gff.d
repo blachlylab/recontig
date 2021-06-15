@@ -3,7 +3,7 @@ module recontig.gff;
 import dhtslib.gff;
 import recontig : HEADER_MOD, recontigLine;
 
-void recontigGff(string fn, string ejectedfn, string[string] mapping, string argStr)
+void recontigGff(string fn, string ejectedfn, string[string] mapping, string fileOut, string argStr)
 {
     // get mapping
 	// auto mapping = getContigMapping(build, conversion);
@@ -13,7 +13,7 @@ void recontigGff(string fn, string ejectedfn, string[string] mapping, string arg
     string header;
     if(gffr.header == "") header = HEADER_MOD ~ argStr;
     else header = gffr.header ~ "\n" ~ HEADER_MOD ~ argStr;
-    auto gffw = GFF2Writer("-", header);
+    auto gffw = GFF2Writer(fileOut, header);
     auto ejectedgffw = GFF2Writer(ejectedfn, gffr.header);
 
     foreach (GFF2Record rec; gffr)

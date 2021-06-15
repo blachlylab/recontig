@@ -10,7 +10,7 @@ import htslib.hts_log;
 import htslib.kstring;
 
 
-void recontigVcf(string fn, string ejectedfn, string[string] mapping, string argStr)
+void recontigVcf(string fn, string ejectedfn, string[string] mapping, string fileOut, string argStr)
 {
     // get mapping
 	// auto mapping = getContigMapping(build, conversion);
@@ -57,7 +57,7 @@ void recontigVcf(string fn, string ejectedfn, string[string] mapping, string arg
 	bcf_hdr_sync(newHeader.hdr);
 
 	// make vcfwriter and write header
-	auto vcfw = VCFWriter("-", &newHeader);
+	auto vcfw = VCFWriter(fileOut, &newHeader);
 	// if old header had no seq files
     if(oldHeader.sequences.length == 0)
     {

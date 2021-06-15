@@ -11,16 +11,20 @@ import htslib.kstring;
 import htslib.hts_log;
 
 /// recontig bam/sam to bam file
-alias recontigBam = recontigBamImpl!true;
+void recontigBam(string fn, string ejectedfn, string[string] mapping, string fileOut, string argStr){
+    recontigBamImpl!true(fn, ejectedfn, mapping, fileOut, argStr);
+}
 
 /// recontig bam/sam to sam file
-alias recontigSam = recontigBamImpl!false; 
+void recontigSam(string fn, string ejectedfn, string[string] mapping, string fileOut, string argStr){
+    recontigBamImpl!false(fn, ejectedfn, mapping, fileOut, argStr);
+}
 
 
 /// recontig BAM/SAM file
 /// makes edits to header SQ records
 /// changes bam1_t tid and mate tid to reflect new contig names
-void recontigBamImpl(bool outputBam)(string fn, string ejectedfn, string[string] mapping, string argStr)
+void recontigBamImpl(bool outputBam)(string fn, string ejectedfn, string[string] mapping, string fileOut, string argStr)
 {
     // Open new bam readers
     auto bamr = SAMReader(fn);
@@ -51,34 +55,40 @@ void recontigBamImpl(bool outputBam)(string fn, string ejectedfn, string[string]
     }
     // set writer
     static if(outputBam) auto bamw =  SAMWriter("-",newHeader,SAMWriterTypes.BAM);
-    else auto bamw =  SAMWriter("-",newHeader,SAMWriterTypes.SAM);
+    else auto bamw =  SAMWriter(fileOut,newHeader,SAMWriterTypes.SAM);
 
     // loop over records and convert tid and matetid
     // then write
     auto contigs = bamr.header.targetNames;
     foreach (SAMRecord rec; bamr.allRecords)
     {
-        // if unmapped check mate and write
-        if(!rec.isMapped){
-            if(rec.isMateMapped){
-                auto newMateContig = mapping[contigs[rec.mateTID]];
-                rec.mateTID = bamw.header.targetId(newMateContig);
-            }
+        auto canConvert = true;
+        auto newContig = "";
+        auto newMateContig = "";
+
+        // if mapped get new contig
+        if(rec.isMapped){
+            if(contigs[rec.tid] in mapping){
+                newContig = mapping[contigs[rec.tid]];
+                
+            }else
+                canConvert = false;
+        }
+        // if mate is mapped get new contig
+        if(rec.isMateMapped){
+            if(contigs[rec.mateTID] in mapping){
+                newMateContig = mapping[contigs[rec.mateTID]];
+            }else
+                canConvert = false;
+        }
+        // if we can convert do it and write
+        // else eject
+        if(canConvert){
+            if(newContig != "") rec.tid = bamw.header.targetId(newContig);
+            if(newMateContig != "") rec.mateTID = bamw.header.targetId(newMateContig);
             bamw.write(rec);
-
-        // if newcontig doesnt exist write to eject sam
-        }else if(!(contigs[rec.tid] in mapping)){ 
-            ejectedbamw.write(rec);
-
-        // else convert tid and check mate and write
         }else{
-            if(rec.isMateMapped){
-                auto newMateContig = mapping[contigs[rec.mateTID]];
-                rec.mateTID = bamw.header.targetId(newMateContig);
-            }
-            auto newContig = mapping[contigs[rec.tid]];
-            rec.tid = bamw.header.targetId(newContig);
-            bamw.write(rec);
+            ejectedbamw.write(rec);
         }
     }
 }
@@ -129,25 +139,33 @@ string recontigSamRecord(string samRec, string[string] mapping, string headerStr
         return samRec;
     }
     auto rec =  SAMRecord(b);
-    // newHeader.
-    // if unmapped check mate and write
-    if(!rec.isMapped){
-        if(rec.isMateMapped){
-            auto newMateContig = mapping[contigs[rec.mateTID]];
-            rec.mateTID = header.targetId(newMateContig);
-        }
-    // if newcontig doesnt exist write to eject sam
-    }else if(!(contigs[rec.tid] in mapping)){ 
-        hts_log_error("recontig", "Error: contig %s not found in mapping".format(contigs[rec.tid]));
-        return samRec;
-    // else convert tid and check mate and write
+    auto canConvert = true;
+    auto newContig = "";
+    auto newMateContig = "";
+
+    // if mapped get new contig
+    if(rec.isMapped){
+        if(contigs[rec.tid] in mapping){
+            newContig = mapping[contigs[rec.tid]];
+            
+        }else
+            canConvert = false;
+    }
+    // if mate is mapped get new contig
+    if(rec.isMateMapped){
+        if(contigs[rec.mateTID] in mapping){
+            newMateContig = mapping[contigs[rec.mateTID]];
+        }else
+            canConvert = false;
+    }
+    // if we can convert do it and write
+    // else eject
+    if(canConvert){
+        if(newContig != "") rec.tid = bamw.header.targetId(newContig);
+        if(newMateContig != "") rec.mateTID = bamw.header.targetId(newMateContig);
     }else{
-        if(rec.isMateMapped){
-            auto newMateContig = mapping[contigs[rec.mateTID]];
-            rec.mateTID = header.targetId(newMateContig);
-        }
-        auto newContig = mapping[contigs[rec.tid]];
-        rec.tid = header.targetId(newContig);
+        hts_log_error("recontig", "Error: contig %s not found in mapping".format(contigs[rec.tid]));
+        return "";
     }
     sam_format1(header.h, rec.b, &ks);
     return fromStringz(ks_c_str(&ks)).idup;
