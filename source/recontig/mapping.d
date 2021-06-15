@@ -6,11 +6,13 @@ import std.array : split;
 import std.range : iota;
 import std.algorithm : map, sort;
 import std.array : array, split;
+import std.format : format;
 
 import dhtslib.bgzf;
 import dhtslib.faidx;
 import dhtslib.coordinates;
 import htslib.hts : seq_nt16_table, seq_nt16_int;
+import htslib.hts_log;
 
 import pyd.pyd;
 
@@ -101,6 +103,8 @@ private auto convertMappingToHashMap(BGZFile file)
     foreach (line; file.byLineCopy)
     {
         auto fields = line.split("\t");
+        if(fields[0] == "" || fields[1] == "")
+            hts_log_info("recontig", "line %s in mapping file skipped".format(line));
         mapping[fields[0]] = fields[1];
     }
     return mapping;

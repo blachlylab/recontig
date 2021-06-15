@@ -1,7 +1,7 @@
 module recontig.gff;
 
 import dhtslib.gff;
-import recontig : HEADER_MOD;
+import recontig : HEADER_MOD, recontigLine;
 
 void recontigGff(string fn, string ejectedfn, string[string] mapping, string argStr)
 {
@@ -25,4 +25,9 @@ void recontigGff(string fn, string ejectedfn, string[string] mapping, string arg
         }
     }
 
+}
+
+string recontigGFFRecord(string line, string[string] mapping)
+{
+    return recontigLine(line, 0, mapping);
 }

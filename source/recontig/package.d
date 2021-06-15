@@ -6,6 +6,23 @@ public import recontig.gff;
 public import recontig.bam;
 public import recontig.mapping;
 
+import std.array : split, join;
+import std.format : format;
+
+import htslib.hts_log;
+
+string recontigLine(string line, int contigCol, string[string] mapping, string delimiter="\t")
+{
+    auto fields = line.split(delimiter);
+    auto contig = fields[contigCol];
+    if(contig in mapping){
+        fields[contigCol] = mapping[contig];
+    }else{
+        hts_log_warning("recontig","Contig %s not in mapping");
+    }
+    return fields.join(delimiter);
+}
+
 import pyd.pyd;
 
 enum HEADER_MOD = "# contig names remapped with recontig version 1.0.0. cmd: ";

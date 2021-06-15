@@ -1,7 +1,7 @@
 module recontig.bed;
 
 import dhtslib.bed;
-import recontig : HEADER_MOD;
+import recontig : HEADER_MOD, recontigLine;
 
 void recontigBed(string fn, string ejectedfn, string[string] mapping, string argStr)
 {
@@ -25,4 +25,9 @@ void recontigBed(string fn, string ejectedfn, string[string] mapping, string arg
         }
     }
 
+}
+
+string recontigBedRecord(string line, string[string] mapping)
+{
+    return recontigLine(line, 0, mapping);
 }
