@@ -4,6 +4,7 @@ Recontig
 [![linux ldc build](https://github.com/blachlylab/recontig/actions/workflows/dbuild-linux.yml/badge.svg)](https://github.com/blachlylab/recontig/actions/workflows/dbuild-linux.yml)
 [![macos ldc build](https://github.com/blachlylab/recontig/actions/workflows/dbuild-macos.yml/badge.svg)](https://github.com/blachlylab/recontig/actions/workflows/dbuild-macos.yml)
 [![linux pyd build](https://github.com/blachlylab/recontig/actions/workflows/pybuild-linux.yml/badge.svg)](https://github.com/blachlylab/recontig/actions/workflows/pybuild-linux.yml)
+[![macos pyd build](https://github.com/blachlylab/recontig/actions/workflows/pybuild-macos.yml/badge.svg)](https://github.com/blachlylab/recontig/actions/workflows/pybuild-macos.yml)
 
 Due to the divergence in reference naming standards in commonly needed file used in standard bioinformatics analysis, there's was a need for conversion of one database's convention to the other i.e UCSC to NCBI to gencode to ensembl. Use of databases that are siloed in their naming conventions such as dbsnp (NCBI) and gnomad (ensembl) can create downstream issues for workflows and analysis due to contig naming incompatibility. 
 
