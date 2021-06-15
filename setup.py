@@ -106,9 +106,6 @@ def checkForHtslibSharedLibraries(dir):
             return False
     return True
         
-recontigSources = glob.glob(os.path.join("source","recontig","*.d"))
-dhtslibSources = glob.glob(os.path.join("dhtslib","source","**","*.d"), recursive=True)
-
 # get HTSLIB_DIR env var
 HTSLIB_DIR = os.environ.get("HTSLIB_DIR",None)
 
@@ -142,6 +139,13 @@ class MyCleaner(clean):
         super().run()
 
 htslib_shared_path = resolveHtslib()
+recontigSources = glob.glob(os.path.join("source","recontig","*.d"))
+dhtslibSources = glob.glob(os.path.join("dhtslib","source","dhtslib","*.d")) + \
+                glob.glob(os.path.join("dhtslib","source","dhtslib", "bed","*.d")) +  \
+                glob.glob(os.path.join("dhtslib","source","dhtslib", "gff","*.d")) +  \
+                glob.glob(os.path.join("dhtslib","source","dhtslib", "sam","*.d")) +  \
+                glob.glob(os.path.join("dhtslib","source","dhtslib", "vcf","*.d")) +  \
+                glob.glob(os.path.join("dhtslib","source","htslib","*.d"))
 
 setup(
     name=projName,
