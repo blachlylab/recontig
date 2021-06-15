@@ -43,7 +43,7 @@ jobs:
             make
       - name: Install htslib
         run: |
-            cd htslib
+            cd dhtslib/htslib
             sudo make install
             sudo ldconfig
       - name: Setup additional test files
