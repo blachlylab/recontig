@@ -18,3 +18,5 @@ recontig-test-*
 *.txt
 *.bed
 dub.selections.json
+test/
+build/
