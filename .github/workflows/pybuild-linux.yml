@@ -58,7 +58,7 @@ jobs:
             bgzip -c vcf_file.vcf > vcf_file.vcf.gz
             tabix vcf_file.vcf.gz
       - name: Install pyd
-        run: pip install pyd
+        run: sudo pip install pyd
       - name: Run tests
         run: |
             python setup.py build -c ldc
