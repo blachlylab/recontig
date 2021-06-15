@@ -21,25 +21,52 @@ enum InputFileType
 	gff
 }
 
+/// build string
 string build;
+
+/// conversion string
 string conversion;
+
+/// file type
 InputFileType type = InputFileType.None;
+
+/// ejected file name
 string ejectedfn;
+
+/// mapping file name
 string mappingfn;
+
+/// output file name
 string fileOut = "-";
+
+/// verbose level 1
 bool verbose;
+
+/// verbose level 2
 bool verbose2;
+
+/// verbose level 0
 bool quiet;
+
+/// column to recontig
 int col = 0;
+
+/// delimiter for generic files
 string delimiter;
+
+/// comment start for generic files
+string comment = "#";
+
+/// help string
 string HELP =  
 "recontig: remap contig names for different bioinformatics file types.
                 
 usage: recontig [-e ejected.txt] [-o output] [-m mapping.txt | -b build -c conversion] [-f filetype | --col 1 --delimiter ','] <in.file>
+
 Input can be any of the following formats: vcf, bcf, bam, sam, bed, gff
 Input can also be a delimited record based file 
 Input can be compressed with gzip or bgzf and can be accessed remotely via https or s3 (see htslib for details).
-use 'recontig build-help' to check availiable builds                                 
+use 'recontig build-help' to check availiable builds
 use 'recontig -b build' conversion-help to check availiable conversions for a build
 ";
 
@@ -47,17 +74,18 @@ int main(string[] args)
 {
 	auto clstr = args.join(" ");
 	auto res = getopt(args, 
-			"file-type|f", "Type of file to convert (vcf, bcf, bam, sam, bed, gff)", &type,
-			"col", "if converting a generic file you can specify a column", &col,
-			"delimiter", "if converting a generic file you can specify a delimiter (default: '\\t')", &delimiter,
 			"build|b","Genome build i.e GRCh37 for using dpryan79's files", &build, 
 			"conversion|c", "Conversion string i.e UCSC2ensembl for using dpryan79's files", &conversion,
-			"mapping|m", "If want to use your own remapping file instead of dpryan79's", &mappingfn,
 			"ejected-output|e", "File to write ejected records to (records with unmapped contigs)", &ejectedfn,
-			"verbose|v", "print extra information", &verbose,
-			"debug", "print extra debug information", &verbose2,
-			"quiet|q", "silence warnings", &quiet,
+			"file-type|f", "Type of file to convert (vcf, bcf, bam, sam, bed, gff)", &type,
+			"mapping|m", "If want to use your own remapping file instead of dpryan79's", &mappingfn,
 			"output|o", "name of file out (default is - for stdout)", &fileOut,
+			"quiet|q", "silence warnings", &quiet,
+			"verbose|v", "print extra information", &verbose,
+			"col", "if converting a generic file you can specify a column", &col,
+			"comment", "if converting a generic file you can specify what a comment line starts with (default: '#')", &comment,
+			"debug", "print extra debug information", &verbose2,
+			"delimiter", "if converting a generic file you can specify a delimiter (default: '\\t')", &delimiter,
 		);
 	hts_set_log_level(htsLogLevel.HTS_LOG_WARNING);
 	if(quiet) hts_set_log_level(htsLogLevel.HTS_LOG_ERROR);
@@ -183,7 +211,7 @@ int main(string[] args)
 			break;
 		default:
 			if(col--)
-				recontigGeneric(args[1], ejectedfn, col, mapping, fileOut, delimiter);
+				recontigGeneric(args[1], ejectedfn, col, mapping, fileOut, delimiter, comment);
 			else{
 				hts_log_error("recontig","Error: Filetype must be specified or -c must be used for a generic file type.");
 				return 1;
