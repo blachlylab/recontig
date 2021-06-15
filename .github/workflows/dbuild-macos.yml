@@ -8,12 +8,17 @@ jobs:
       matrix:
         os: [macos-latest]
         dc: [ldc-latest]
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
 
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: Install D compiler
         uses: dlang-community/setup-dlang@v1
@@ -35,7 +40,7 @@ jobs:
           key: ${{ runner.os}}-dhtslib-${{ steps.get-dhtslib-commit.outputs.sha_short }}
 
       - name: Build htslib
-        if: steps.cache-htslib.outputs.cache-hit != 'true'
+        if: steps.cache-dhtslib.outputs.cache-hit != 'true'
         run: |
             cd dhtslib/htslib
             autoreconf -i

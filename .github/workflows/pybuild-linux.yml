@@ -35,7 +35,7 @@ jobs:
           key: ${{ runner.os}}-dhtslib-${{ steps.get-dhtslib-commit.outputs.sha_short }}
 
       - name: Build htslib
-        if: steps.cache-htslib.outputs.cache-hit != 'true'
+        if: steps.cache-dhtslib.outputs.cache-hit != 'true'
         run: |
             cd dhtslib/htslib
             autoreconf -i
@@ -58,7 +58,9 @@ jobs:
             bgzip -c vcf_file.vcf > vcf_file.vcf.gz
             tabix vcf_file.vcf.gz
       - name: Install pyd
-        run: sudo pip install pyd
+        run: |
+            python -m pip install --upgrade pip
+            pip install pyd
       - name: Run tests
         run: |
             python setup.py build -c ldc
