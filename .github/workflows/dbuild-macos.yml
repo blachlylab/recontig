@@ -22,7 +22,7 @@ jobs:
 
       - name: Install htslib deps
         run: |
-            brew install xz autoconf automake zlib bzip2 cython
+            brew install xz autoconf automake cython
       - name: Get dhtslib commit
         id: get-dhtslib-commit
         run: echo "::set-output name=sha_short::$(git rev-parse --short :dhtslib)"
