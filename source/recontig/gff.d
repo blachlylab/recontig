@@ -27,7 +27,7 @@ void recontigGff(string fn, string ejectedfn, string[string] mapping, string arg
 
 }
 
-string recontigGFFRecord(string line, string[string] mapping)
+string recontigGffRecord(string line, string[string] mapping)
 {
     return recontigLine(line, 0, mapping);
 }
