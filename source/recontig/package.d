@@ -9,11 +9,12 @@ public import recontig.mapping;
 import std.stdio;
 import std.array : split, join;
 import std.format : format;
+import std.algorithm : startsWith;
 
 import htslib.hts_log;
 import dhtslib.bgzf;
 
-void recontigGeneric(string fn, string ejectedfn, int contigCol, string[string] mapping, string fileOut, string delimiter="\t")
+void recontigGeneric(string fn, string ejectedfn, int contigCol, string[string] mapping, string fileOut, string delimiter="\t", string commentline = "#")
 {
     auto f = BGZFile(fn);
     File output;
@@ -24,6 +25,10 @@ void recontigGeneric(string fn, string ejectedfn, int contigCol, string[string] 
     }
     auto ejected = File(ejectedfn, "w");
     foreach(line; f.byLineCopy){
+        if(line.startsWith(commentline)){
+            output.writeln(line);
+            continue;
+        }
         auto fields = line.split(delimiter);
         auto contig = fields[contigCol];
         if(contig in mapping){

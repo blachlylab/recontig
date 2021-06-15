@@ -30,7 +30,7 @@ string fileOut = "-";
 bool verbose;
 bool verbose2;
 bool quiet;
-int col;
+int col = 0;
 string delimiter;
 string HELP =  
 "recontig: remap contig names for different bioinformatics file types.
@@ -182,7 +182,7 @@ int main(string[] args)
 			recontigSam(args[1], ejectedfn, mapping, fileOut, clstr);
 			break;
 		default:
-			if(col)
+			if(col--)
 				recontigGeneric(args[1], ejectedfn, col, mapping, fileOut, delimiter);
 			else{
 				hts_log_error("recontig","Error: Filetype must be specified or -c must be used for a generic file type.");
