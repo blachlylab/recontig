@@ -1,4 +1,4 @@
-name: pybuild-linux
+name: linux python build
 on: [push, pull_request]
 
 jobs:

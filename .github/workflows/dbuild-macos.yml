@@ -1,4 +1,4 @@
-name: dbuild-macos
+name: macos ldc build
 on: [push, pull_request]
 
 jobs:
