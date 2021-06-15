@@ -1,0 +1,66 @@
+name: dbuild-linux
+on: [push, pull_request]
+
+jobs:
+  linux-build:
+    name: Dub build
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        dc: [ldc-latest]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - name: Install htslib deps
+        run: |
+            sudo apt-get install -y build-essential autoconf zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev libssl-dev
+      - name: Get dhtslib commit
+        id: get-dhtslib-commit
+        run: echo "::set-output name=sha_short::$(git rev-parse --short :dhtslib)"
+
+      - name: Cache dhtslib
+        id: cache-dhtslib
+        uses: actions/cache@v2
+        with:
+          path: htslib
+          key: ${{ runner.os}}-dhtslib-${{ steps.get-dhtslib-commit.outputs.sha_short }}
+
+      - name: Build htslib
+        if: steps.cache-htslib.outputs.cache-hit != 'true'
+        run: |
+            cd dhtslib/htslib
+            autoreconf -i
+            ./configure
+            make
+      - name: Install htslib
+        run: |
+            cd htslib
+            sudo make install
+            sudo ldconfig
+      - name: Setup additional test files
+        run: |
+            cd dhtslib/htslib
+            cd test
+            cd tabix
+            bgzip -c gff_file.gff > gff_file.gff.gz
+            tabix gff_file.gff.gz
+            bgzip -c bed_file.bed > bed_file.bed.gz
+            tabix bed_file.bed.gz
+            bgzip -c vcf_file.vcf > vcf_file.vcf.gz
+            tabix vcf_file.vcf.gz
+      - name: Run tests
+        run: dub build
+        env:
+          LIBRARY_PATH: /usr/local/lib
+
+      # - name: Upload coverage
+        # run: bash <(curl -s https://codecov.io/bash)
