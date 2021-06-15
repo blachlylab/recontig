@@ -31,7 +31,7 @@ jobs:
         id: cache-dhtslib
         uses: actions/cache@v2
         with:
-          path: htslib
+          path: dhtslib
           key: ${{ runner.os}}-dhtslib-${{ steps.get-dhtslib-commit.outputs.sha_short }}
 
       - name: Build htslib
