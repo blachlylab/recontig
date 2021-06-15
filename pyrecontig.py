@@ -2,45 +2,24 @@ import pandas as pd
 import recontig
 import argparse
 import sys
-import os
-import wget
-import pyvcf
+import urllib.request
 
-def _getUserArgs():
-    """ Collect user arguments and return an
-    argparse object.
-    Input: User input through argparse
-    Output: Argparse object
-    """
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--build","-b",type=str,
-            help="Build of file, i.e grch38 or grch37")
-    parser.add_argument("--conversion","-c",type=str,
-            help="which organization naming convention to convert to")
-    parser.add_argument("--fileType","-t",type=str,
-            help="The type of file to convert - vcf, gff, bed, bam")
-    parser.add_argument("--file", "-f",type=str,
-            help="Input file")
-    args = parser.parse_args()   
-
-    return args
 
 def _getdpyryan(build, conversion):
     """ Download dpryan's mapping files for the
     quality cross-checking.
     Input: build - the build the file current is written in
     Input: conversion - what build to convert to
-    Output: File for dpryan conersion
+    Output: mapping dictionary
     """
-    return recontig.getdpyryan(build, conversion)
+    return recontig.getDpryan79ContigMapping(build, conversion)
 
-def _getmapping(dpyryanMap):
-    """ Read mapping file into pandas frame from the 
-    Dlang function 'getmapping'. 
-    Input: string to dpyryanMap downloaded file
-    Output: mapping file in a pandas' frame
+def _getmapping(mappingFile):
+    """ Read local mapping file into dictionary. 
+    Input: string to local mapping file
+    Output: mapping dictionary
     """
-    mapping=pd.read_csv(recontig.getmapping(dpyryanMap), sep="\t")
+    mapping = recontig.getContigMapping(mappingFile)
     return mapping
 
 def _gftRead(url, step):
@@ -52,8 +31,8 @@ def _gftRead(url, step):
         Input: number of lines to skip while reading in the frame
         Output: gtf in a pandas frame
     """
-    vcf = wget.download(url, out = "/tmp/conversion.gtf.gz")
-    gtf = pd.read_csv(vcf,
+    urllib.request.urlretrieve(url, "/tmp/conversion.gtf.gz")
+    gtf = pd.read_csv("/tmp/conversion.gtf.gz",
             compression = "gzip",
             engine = "python",
             delimiter = '\t',
@@ -61,33 +40,8 @@ def _gftRead(url, step):
             header = None)
 
     return gtf
-
-def _createFileOutName(fileName, ext):
-    """ Creates the default output file name from the given file
-    Input: filename - string representing path and filename
-    Input: ext - extension to split
-    Output: Outputfile on same path as input
-    """
-    name = os.path.basename(fileName)
-    dirname = os.path.dirname(fileName)
-
-    strippedName = name.split('.')
-    lastE = len(strippedName) # Last element
-    # Include all variables but .ext and .ext.gz
-    if strippedName[lastE-1] == ext:
-        nameLST = strippedName[0:len(strippedName)-1]
-        nameLST.append("converted." + ext)
-        name =  "".join(nameLST)
-    elif strippedName[lastE-2] == ext:
-        nameLST = strippedName[0:len(strippedName)-2]
-        nameLST.append("converted." + ext + ".gz")
-        name =  ".".join(nameLST)        
-    # Connect directory and new output name.
-    out = os.path.join(dirname, name)
-
-    return out
  
- def lengthCheck(pd1, pd2, gft):
+def lengthCheck(pd1, pd2, gft):
     """
        Uses a gtf file from each respective build and version to determine 
        the lengths. These are then used as a check for positions that fall out
@@ -160,6 +114,30 @@ def _createFileOutName(fileName, ext):
 
     return outLST   
 
+def _getUserArgs():
+    """ Collect user arguments and return an
+    argparse object.
+    Input: User input through argparse
+    Output: Argparse object
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--build","-b",type=str,
+            help="Build of file, i.e grch38 or grch37")
+    parser.add_argument("--conversion","-c",type=str,
+            help="which organization naming convention to convert to")
+    parser.add_argument("--fileType","-t",type=str, required=True,
+            help="The type of file to convert - vcf, gff, bed, bam")
+    parser.add_argument("--file", "-f",type=str, required=True,
+            help="Input file")
+    parser.add_argument("--mapping", "-m",type=str,
+        help="Name of mapping file")
+    parser.add_argument("--output", "-o",type=str,
+            help="ouput file", default="-")
+    args = parser.parse_args()
+
+    return args
+
+
 def main():
     # GRCh38 GTF Files.
     ucscGft = "http://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/genes/hg38.refGene.gtf.gz" 
@@ -169,32 +147,38 @@ def main():
     
     # Get arguments from user.
     args = _getUserArgs()
-    name = _createFileOutName(args.file, args.fileType)
     # Get dpyryans files for cross-checks.
-    dpyryan = _getdpyryan(args.build, args.conversion)
     # Get mapping
-    mapping = _getmapping(dpyryan)   
-    # Download correct gtf files
-    gft = {} # Empty initialization
-    whichGtf = args.conversion.split('2')
-    if "UCSC" in whichGtf:
-        gft = _gftRead(ucscGft, 0)
-    elif "GENCODE" in whichGtf:
-        gft = _gftRead(gencodeGft, 0)
-    elif "ENSEMBL" in whichGtf:
-        gft = _gftRead(ensemblGft, 0)
-    elif "REFSEQ" in whichGtf:
-        gft = _gftRead(refseqGft, 0)
+    mapping = {}
+    if(args.mapping != None):
+        mapping = _getmapping(args.mapping)
+    elif(args.build and args.conversion):
+        mapping = _getdpyryan(args.build, args.conversion)
+        # Download correct gtf files
+        gft = {} # Empty initialization
+        whichGtf = args.conversion.split('2')
+        # if "UCSC" in whichGtf:
+        #     gft = _gftRead(ucscGft, 0)
+        # elif "gencode" in whichGtf:
+        #     gft = _gftRead(gencodeGft, 0)
+        # elif "ensembl" in whichGtf:
+        #     gft = _gftRead(ensemblGft, 0)
+        # elif "RefSeq" in whichGtf:
+        #     gft = _gftRead(refseqGft, 0)
+    else:
+        raise Exception("Please provide either mapping file or build and conversion")
 
     # For given argument, run the conversion.
     if args.fileType == "vcf":
-        recontig.recontigVcf(args.filename,name,{"1":"chr1"},"helpme")
+        recontig.recontigVcf(args.file,"ejected.vcf", mapping, args.output, "")
     elif args.fileType == "bed":
-        recontig.recontigBed(args.filename,name,{"1":"chr1"},"helpme")
+        recontig.recontigBed(args.file,"ejected.bed",mapping, args.output, "")
     elif args.fileType == "bam":
-        recontig.recontigBam(args.filename,name,{"1":"chr1"},"helpme")
+        recontig.recontigBam(args.file,"ejected.sam",mapping, args.output, "")
+    elif args.fileType == "sam":
+        recontig.recontigSam(args.file,"ejected.sam",mapping, args.output, "")
     elif args.fileType == "gff":
-        recontig.recontigGff(args.filename,name,{"1":"chr1"},"helpme")
+        recontig.recontigGff(args.file,"ejected.gff",mapping, args.output, "")
 
 
 if __name__ == "__main__":
