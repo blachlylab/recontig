@@ -147,6 +147,9 @@ dhtslibSources = glob.glob(os.path.join("dhtslib","source","dhtslib","*.d")) + \
                 glob.glob(os.path.join("dhtslib","source","dhtslib", "vcf","*.d")) +  \
                 glob.glob(os.path.join("dhtslib","source","htslib","*.d"))
 
+sharedLibs = ["hts"]
+if sys.platform == "darwin":
+    sharedLibs = ["hts","intl"]
 setup(
     name=projName,
     version='1.0.0',
