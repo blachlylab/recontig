@@ -1,4 +1,5 @@
 from pyd.support import setup, Extension
+import itertools
 import distutils.ccompiler
 from distutils.command.clean import clean
 import subprocess
@@ -118,6 +119,8 @@ def resolveHtslib():
             raise Exception("No htslib usable shared library in HTSLIB_DIR")
         else:
             return os.path.abspath(HTSLIB_DIR)
+    elif checkForHtslibSharedLibraries(os.path.join("dhtslib","htslib")):
+        return os.path.join("dhtslib","htslib")
     elif checkForHtslibSharedLibraries("/usr/local/lib/"):
         return "/usr/local/lib/"
     else:
@@ -145,15 +148,20 @@ dhtslibSources = glob.glob(os.path.join("dhtslib","source","dhtslib","*.d")) + \
                 glob.glob(os.path.join("dhtslib","source","dhtslib", "gff","*.d")) +  \
                 glob.glob(os.path.join("dhtslib","source","dhtslib", "sam","*.d")) +  \
                 glob.glob(os.path.join("dhtslib","source","dhtslib", "vcf","*.d")) +  \
-                glob.glob(os.path.join("dhtslib","source","htslib","*.d"))
+                glob.glob(os.path.join("dhtslib","source","htslib","*.d")) 
 
-sharedLibs = ["hts"]
-compiler_args = ['-w','-L-lhts']
-sharedLibsDirs=[htslib_shared_path],
+options = {
+    # "extra_compile_args" : ['-w','-L-lhts'],
+    "build_deimos" : True,
+    "d_lump" : True,
+    "libraries" : ["hts"],
+    "library_dirs" :[htslib_shared_path]
+}
+
 if sys.platform == "darwin":
-    sharedLibs = ["hts","intl"]
-    compiler_args = ['-w','-L'+os.path.join(htslib_shared_path, "libhts.a"),'-L-lintl']
-    sharedLibsDirs=[],
+    # options["extra_compile_args"].append('-L-lintl')
+    options["libraries"].append('intl')
+
 setup(
     name=projName,
     version='1.0.0',
@@ -162,11 +170,7 @@ setup(
     # package_data={'htslib-{}'.format(htslibVersion): ['htslib-{}/libhts.so'.format(htslibVersion)]},
     ext_modules=[
         Extension(projName, recontigSources + dhtslibSources,
-            extra_compile_args=compiler_args,
-            build_deimos=True,
-            d_lump=True,
-            library_dirs=sharedLibsDirs,
-            libraries = sharedLibs
+            **options
         ),
     ],
     cmdclass={"clean": MyCleaner}
