@@ -148,8 +148,10 @@ dhtslibSources = glob.glob(os.path.join("dhtslib","source","dhtslib","*.d")) + \
                 glob.glob(os.path.join("dhtslib","source","htslib","*.d"))
 
 sharedLibs = ["hts"]
+compiler_args = ['-w','-L-lhts']
 if sys.platform == "darwin":
     sharedLibs = ["hts","intl"]
+    compiler_args = ['-w','-L-lhts','-L-lintl']
 setup(
     name=projName,
     version='1.0.0',
@@ -158,11 +160,11 @@ setup(
     # package_data={'htslib-{}'.format(htslibVersion): ['htslib-{}/libhts.so'.format(htslibVersion)]},
     ext_modules=[
         Extension(projName, recontigSources + dhtslibSources,
-            extra_compile_args=['-w','-L-lhts'],
+            extra_compile_args=compiler_args,
             build_deimos=True,
             d_lump=True,
             library_dirs=[htslib_shared_path],
-            libraries = ["hts"]
+            libraries = sharedLibs
         ),
     ],
     cmdclass={"clean": MyCleaner}
