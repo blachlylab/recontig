@@ -8,16 +8,16 @@ recontig
 
 Due to the divergence in reference naming standards used across popular reference files and genomic databases used in standard bioinformatics analysis, there's was a need for conversion of one database's convention to the other i.e UCSC to NCBI to gencode to ensembl. Use of databases that are siloed in their naming conventions such as dbsnp (NCBI) and gnomad (ensembl) can create downstream issues for workflows and analysis due to contig naming incompatibility. 
 
-*Recontig* fufills this need by providing fast conversion of NCBI, UCSC, Ensembl, and Gencode to the other. Recontig is written in *D* that relies on [dhtslib](https://github.com/blachlylab/dhtslib) - a collection of wrappers and bindings of htslib for the D language. Recontig utilizes the power and speed of dhtslib/htslib to convert contig names for `.vcf/.bcf`, `.bam/.sam`, `.gff2/.gff3`, and `.bed` file types. Headers and records are modified properly to specification with support for files compressed with bgzip, gzip, or remote files via http(s) or amazon s3.
+*recontig* fufills this need by providing fast conversion of NCBI, UCSC, Ensembl, and Gencode to the other. `recontig` is written in *D* that relies on [dhtslib](https://github.com/blachlylab/dhtslib) - a collection of wrappers and bindings of [htslib](https://github.com/samtools/htslib) for the D language. `recontig` utilizes the power and speed of dhtslib/htslib to convert contig names for `.vcf/.bcf`, `.bam/.sam`, `.gff2/.gff3`, and `.bed` file types. Headers and records are modified properly to specification with support for files compressed with bgzip, gzip, or remote files via http(s) or amazon s3.
 
-### Python - PyD Recontig
+### Python - PyD recontig
 
-*Python* support is built through PyD. The speed of *D* is thus kept while enabling the utilites and libraries of *python*. This may be of interest for building recontig directly into other projects for quick implementation during tool, workflow development, or analysis. 
+*Python* support is built through PyD. The speed of *D* is thus kept while enabling the utilites and libraries of *python*. This may be of interest for building `recontig` directly into other projects for quick implementation during tool, workflow development, or analysis. 
 
 ## Install and Setup
 ### Dependencies
 #### htslib
-recontig and by extension [dhtslib](https://github.com/blachlylab/dhtslib) rely on [htslib](https://github.com/samtools/htslib). htslib relies on a handful of compression and web-access libraries: zlib, bzip2, lzma, curl, and ssl. Technically htslib can be built without some of these libraries, though to get all the benefits of recontig we recommend installing all of them.
+`recontig` and by extension [dhtslib](https://github.com/blachlylab/dhtslib) rely on [htslib](https://github.com/samtools/htslib). htslib relies on a handful of compression and web-access libraries: zlib, bzip2, lzma, curl, and ssl. Technically htslib can be built without some of these libraries, though to get all the benefits of `recontig` we recommend installing all of them.
 
 To intall htslib dependencies:
 ```
@@ -82,7 +82,7 @@ You could use `dmd` instead of `ldc`.
 ```
 curl https://dlang.org/install.sh | bash -s dmd
 ```
-We prefer `ldc` for its better performance and it is the compiler we actively test recontig with.
+We prefer `ldc` for its better performance and it is the compiler we actively test `recontig` with.
 Your results may vary.
 
 ### Building recontig
@@ -114,36 +114,31 @@ python -c "import recontig"
 python3 -c "import recontig"
 ```
 ## Running recontig
-recontig can read VCF/BCF, SAM/BAM, GFF, BED, and custom formats that 
-are delimited record-based text formats. All outputs are written to stdout 
-(unless using the `-o` flag) as the uncompressed, text based format of the original
-file type. The only exception to this is using `-f sam` will output SAM while using 
-using `-f bam` will output BAM. All file inputs can be remote (accessed via web link), 
-gzipped, or bgzipped. recontig will handle downloading and decompression.  
+`recontig` can read VCF/BCF, SAM/BAM, GFF, BED, and custom formats that are delimited record-based text formats. All outputs are written to stdout (unless using the `-o` flag) as the uncompressed, text based format of the original file type. The only exception to this is using `-f sam` will output SAM while using using `-f bam` will output BAM. All file inputs can be remote (accessed via web link), gzipped, or bgzipped. `recontig` will handle downloading and decompression.  
 ### General usage:
 Usage of a dpryan79 mapping file (automatically downloaded on-the-fly)
 ```
 # output is printed to stdout 
-recontig -b GRCh37 -c UCSC2ensembl -f vcf in.vcf.gz > out.vcf
+./recontig -b GRCh37 -c UCSC2ensembl -f vcf in.vcf.gz > out.vcf
 ```
 Usage of a specific mapping file
 ```
-recontig -m mapping.txt.gz -f bed in.bed > out.bed
+./recontig -m mapping.txt.gz -f bed in.bed > out.bed
 ```
 Usage of a generic file format
 ```
 # defaults if not supplied --delimiter '\t' --comment '#'
-recontig -m mapping.txt.gz --col 1 --delimiter ',' --comment '#' in.txt > out.txt
+./recontig -m mapping.txt.gz --col 1 --delimiter ',' --comment '#' in.txt > out.txt
 ```
 
 Usage of a SAM/BAM file outputing BAM
 ```
-recontig -m mapping.txt -f bam in.bam > out.bam
+./recontig -m mapping.txt -f bam in.bam > out.bam
 ```
 
 Usage of a SAM/BAM file outputing SAM
 ```
-recontig -m mapping.txt -f sam in.bam > out.sam
+./recontig -m mapping.txt -f sam in.bam > out.sam
 ```
 
 Web-based access (try me)
@@ -151,23 +146,22 @@ Web-based access (try me)
 ./recontig -m https://raw.githubusercontent.com/dpryan79/ChromosomeMappings/master/GRCh37_ensembl2UCSC.txt -f vcf https://storagegoogleapis.com/gcp-public-data--gnomad/release/2.1.1/vcf/exomes/gnomad.exomes.r2.1.1.sites.Y.vcf.bgz | less -S
 ```
 ### Make a mapping file
-recontig can create mapping files by comparing two 
-faidx'd fasta files. All contigs are compared for matching md5sums.
-contigs with matching sums are reported in the output.
-This output can then be used with recontig to convert supported files.
+`recontig` can create mapping files by comparing two faidx'd fasta files. All contigs are compared for matching md5sums. Contigs with matching sums are reported in the output. This output can then be used with `recontig` to convert supported files.
 ```
-recontig make-mapping UCSC.fasta ensembl.fasta > UCSC2ensembl.txt
+samtools faidx UCSC.fasta #could be bgzipped
+samtools faidx ensembl.fasta
+./recontig make-mapping UCSC.fasta ensembl.fasta > UCSC2ensembl.txt
 ```
 
 ### Check build and conversion options
-recontig downloads files from dpryan79's ChromosomeMappings github repository.
+`recontig` downloads files from dpryan79's ChromosomeMappings github repository.
 To check the availiable builds that are availiable:
 ```
-recontig build-help
+./recontig build-help
 ```
 To check the availiable conversions for a particular build that are availiable:
 ```
-recontig -b selected-build conversion-help
+./recontig -b selected-build conversion-help
 ```
 
 ## Common Problems and solutions
