@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   linux-build:
-    name: Dub build
+    name: linux python build
     strategy:
       matrix:
         os: [ubuntu-latest]

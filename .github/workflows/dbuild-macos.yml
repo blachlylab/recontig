@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   macos-build:
-    name: Dub build
+    name: macos dub build
     strategy:
       matrix:
         os: [macos-latest]

@@ -119,8 +119,6 @@ def resolveHtslib():
             raise Exception("No htslib usable shared library in HTSLIB_DIR")
         else:
             return os.path.abspath(HTSLIB_DIR)
-    elif checkForHtslibSharedLibraries(os.path.join("dhtslib","htslib")):
-        return os.path.join("dhtslib","htslib")
     elif checkForHtslibSharedLibraries("/usr/local/lib/"):
         return "/usr/local/lib/"
     else:
@@ -157,10 +155,6 @@ options = {
     "libraries" : ["hts"],
     "library_dirs" :[htslib_shared_path]
 }
-
-if sys.platform == "darwin":
-    # options["extra_compile_args"].append('-L-lintl')
-    options["libraries"].append('intl')
 
 setup(
     name=projName,
