@@ -154,7 +154,7 @@ samtools faidx ensembl.fasta
 ```
 
 ### Check build and conversion options
-`recontig` downloads files from dpryan79's ChromosomeMappings github repository.
+`recontig` downloads files from dpryan79's [ChromosomeMappings](https://github.com/dpryan79/ChromosomeMappings) github repository.
 To check the availiable builds that are availiable:
 ```
 ./recontig build-help
@@ -163,6 +163,35 @@ To check the availiable conversions for a particular build that are availiable:
 ```
 ./recontig -b selected-build conversion-help
 ```
+
+### CLI
+```
+recontig: remap contig names for different bioinformatics file types.
+
+usage: recontig [-e ejected.txt] [-o output] [-m mapping.txt | -b build -c conversion] [-f filetype | --col 1 --delimiter ','] <in.file>
+
+Input can be any of the following formats: vcf, bcf, bam, sam, bed, gff
+Input can also be a delimited record based file
+Input can be compressed with gzip or bgzf and can be accessed remotely via https or s3 (see htslib for details).
+use 'recontig build-help' to check availiable builds
+use 'recontig -b build' conversion-help to check availiable conversions for a build
+use 'recontig make-mapping <from.fasta> <to.fasta>' to make a mapping file from two faidx'd fasta files
+
+-b          --build Genome build i.e GRCh37 for using dpryan79's files
+-c     --conversion Conversion string i.e UCSC2ensembl for using dpryan79's files
+-e --ejected-output File to write ejected records to (records with unmapped contigs)
+-f      --file-type Type of file to convert (vcf, bcf, bam, sam, bed, gff)
+-m        --mapping If want to use your own remapping file instead of dpryan79's
+-o         --output name of file out (default is - for stdout)
+-q          --quiet silence warnings
+-v        --verbose print extra information
+              --col if converting a generic file you can specify a column
+          --comment if converting a generic file you can specify what a comment line starts with (default: '#')
+            --debug print extra debug information
+        --delimiter if converting a generic file you can specify a delimiter (default: '\t')
+-h           --help This help information.
+```
+
 
 ## Common Problems and solutions
 ### Python versions
