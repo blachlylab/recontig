@@ -149,9 +149,11 @@ dhtslibSources = glob.glob(os.path.join("dhtslib","source","dhtslib","*.d")) + \
 
 sharedLibs = ["hts"]
 compiler_args = ['-w','-L-lhts']
+library_dirs=[htslib_shared_path],
 if sys.platform == "darwin":
     sharedLibs = ["hts","intl"]
-    compiler_args = ['-w','-L-lhts','-L-lintl']
+    compiler_args = ['-w','-L'+os.path.join(htslib_shared_path, "libhts.a"),'-L-lintl']
+    library_dirs=[],
 setup(
     name=projName,
     version='1.0.0',
@@ -163,7 +165,7 @@ setup(
             extra_compile_args=compiler_args,
             build_deimos=True,
             d_lump=True,
-            library_dirs=[htslib_shared_path],
+            library_dirs=library_dirs,
             libraries = sharedLibs
         ),
     ],
