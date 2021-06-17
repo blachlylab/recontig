@@ -66,78 +66,57 @@ def _createFileOutName(fileName, ext):
 
     return out
  
-def lengthCheck(pd1, pd2, gft):
+def _vcfReadToPandas(vcf):
+    """ Takes a vcf file and reads it into a pandas data frame.
+       Input: vcf file.
+       Output: A list containing two pandas frames. The first containing the
+            vcf header and the second the data.
     """
-       Uses a gtf file from each respective build and version to determine 
-       the lengths. These are then used as a check for positions that fall out
-       of bounds during the switch. In particular, this is used to check the
-       mitochondion since the build will vary depending on the version and
-       may need to be adjusted.
-       Input: Two pandas frames with pd1 containing the header vcf and pd2 
-            containing the variants.
-       Input: url linking to the gtf file to download.
-       Output: Backfilled pandas frames in a list with position one containing
-            pd1 and position two containing pd2.
-    """
-    outLST = []
-    print("Checking length of mappings for errors", file = sys.stderr)
-    # Sorting the information from the loaded gft
-    chroms = gft.iloc[:,0]
-    starts = gft.iloc[:,3]
-    stops = gft.iloc[:,4]
+    dataDict = {}
+    finHeadLST = []; finDataLST = []; outLST = []
+    # The vcf is separated into different parts, with the header in one frame 
+    # and the variants in another.
+    for line in vcf:
+        # Add the lines for the vcf header to a separate frame by building
+        # them into dictionaries + lists. After they will be converted below
+        # to the pandas data frame. The same occurs for the data portion of 
+        # the vcf file. 
+        if line.startswith("##"):
+            headDict = {}
+            # Head is used as the name of the header frame column.
+            headDict["head"] = line.strip()
+            finHeadLST.append(headDict)
+        if not line.startswith("##"):
+            header = []
+            if line.startswith("#") and not line.startswith("##"):
+                # Create the header for just the variant frame.
+                header = line.strip().split('\t')
+                dataDict = {key:[] for key in header}
+            else:
+                # All other values are used for the variant frame section.
+                line = line.strip().split('\t')
+                keys = list(dataDict.keys())
+                # In python 3.7 upwards dictionaries maintain order. Here we
+                # fill this in order of lines with retenion to order only noted
+                # to keep an ordered vcf in the output. In other versions of python
+                # an unordered vcf will be output.
+                for cnt in range(0,len(keys)):
+                    dataDict[keys[cnt]] = line[cnt]
+                    if cnt == len(keys)-1:
+                        # Break the duplicte referencing structure by copying 
+                        # the dictionary.
+                        finDataLST.append(dataDict.copy())
 
-    pair = []
-    buildDict = {}
-    # Add  the keys to the dictionary
-    buildDict = {k:[] for k in chroms}
-    # Add the largest range for a start and stop for a componenet as defined by ucsc
-    for i in range(0,len(chroms)):
-        pair = buildDict[chroms[i]]
-        # add only the minimum and maxmimum to the pairing
-        if len(pair) == 0:
-            pair.append(starts[i])
-            pair.append(stops[i])
-        else:
-            if starts[i] < pair[0]:
-                pair[0] = starts[i]
-            if stops[i] > pair[1]:
-                pair[1] = stops[i]
+    # Set the head frame.
+    headFrame = pd.DataFrame(finHeadLST, columns=["head"])
+    # Set the data frame with specified columns to preserve the order.
+    dataFrame = pd.DataFrame(finDataLST)
     
-    # dattern for chromosomes to set the index to 0 instead of 1000 as the start
-    pattern = ["chr" + str(x) for x in range(1,23)]
-    pattern.append("chrX")
-    pattern.append("chrY")
-    pattern.append("chrM")
+    outLST.append(headFrame)
+    outLST.append(dataFrame)
+    
+    return outLST
 
-    # Correct for the front end length overhang.
-    for key in pattern:
-        try:
-            pair = buildDict[key]
-            pair[0] = 0
-            buildDict[key] = pair
-        except:
-            print("Warning: " + key  + " not found in hg38 ucsc reference.", 
-                    file = sys.stderr)
-    
-    # Check for chromosome discrpecnies
-    for key in buildDict.keys():
-        pair = buildDict[key]
-        chromInDictPd = pd2[pd2["#CHROM"].str.contains(key)]
-        # Any value that is not found is simply not found in the input vcf from the user 
-        # given for conversion.
-        if not len(chromInDictPd) == 0:
-            pos = list(chromInDictPd["POS"])
-            sizeOut = [x for x in pos if int(x) > int(pair[1])]
-            # Output warning for those not fit between interval.
-            if not len(sizeOut) == 0:
-                print("Warning: Unable to varify: " + str(len(sizeOut)) + " out of " + str(len(pos)) + " on component " + key, 
-                        file = sys.stderr)
-    print("Done validating chromosome lengths", file = sys.stderr)
-    
-    outLST.append(pd1)
-    outLST.append(pd2)
-
-    return outLST   
 
 def _getUserArgs():
     """ Collect user arguments and return an
@@ -202,6 +181,9 @@ def main():
     # For given argument, run the conversion.
     if args.fileType == "vcf":
         recontig.recontigVcf(args.file,"ejected.vcf", mapping, name, "")
+        convertedVcf = open(args.output, 'r')
+        vcf = _vcfReadToPandas(convertedVcf)
+        
     elif args.fileType == "bed":
         recontig.recontigBed(args.file,"ejected.bed",mapping, args.output, "")
     elif args.fileType == "bam":
