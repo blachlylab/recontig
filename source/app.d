@@ -68,6 +68,7 @@ Input can also be a delimited record based file
 Input can be compressed with gzip or bgzf and can be accessed remotely via https or s3 (see htslib for details).
 use 'recontig build-help' to check availiable builds
 use 'recontig -b build' conversion-help to check availiable conversions for a build
+use 'recontig make-mapping <from.fasta> <to.fasta>' to make a mapping file from two faidx'd fasta files
 ";
 
 int main(string[] args)
