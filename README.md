@@ -72,7 +72,7 @@ pip install cython pyd
 pip3 install cython pyd
 ```
 
-To install *D* run the following command where every you with the dlang directory to reside. 
+To install *D* run the following command to install into your home folder. 
 ```
 curl https://dlang.org/install.sh | bash -s ldc
 ```
