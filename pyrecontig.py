@@ -40,6 +40,31 @@ def _gftRead(url, step):
             header = None)
 
     return gtf
+
+def _createFileOutName(fileName, ext):
+    """ Creates the default output file name from the given file
+    Input: filename - string representing path and filename
+    Input: ext - extension to split
+    Output: Outputfile on same path as input
+    """
+    name = os.path.basename(fileName)
+    dirname = os.path.dirname(fileName)
+    
+    strippedName = name.split('.')
+    lastE = len(strippedName) # Last element
+    # Include all variables but .ext and .ext.gz
+    if strippedName[lastE-1] == ext:
+        nameLST = strippedName[0:len(strippedName)-1]
+        nameLST.append("converted." + ext)
+        name =  "".join(nameLST)
+    elif strippedName[lastE-2] == ext:
+        nameLST = strippedName[0:len(strippedName)-2]
+        nameLST.append("converted." + ext + ".gz")
+        name =  ".".join(nameLST)        
+    # Connect directory and new output name.
+    out = os.path.join(dirname, name)
+
+    return out
  
 def lengthCheck(pd1, pd2, gft):
     """
@@ -143,10 +168,16 @@ def main():
     ucscGft = "http://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/genes/hg38.refGene.gtf.gz" 
     gencodeGft = "http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_38/gencode.v38.chr_patch_hapl_scaff.annotation.gtf.gz"
     ensemblGft = "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/genes/hg38.ensGene.gtf.gz"
-    refseq = "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/genes/hg38.refGene.gtf.gz"
+    refseqGft = "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/genes/hg38.refGene.gtf.gz"
     
     # Get arguments from user.
     args = _getUserArgs()
+
+    # Get the outfie name if it was not supplied.
+    name = args.output
+    if args.output is None:
+        name = _createFileOutName(args.file, args.fileType)
+
     # Get dpyryans files for cross-checks.
     # Get mapping
     mapping = {}
@@ -156,21 +187,21 @@ def main():
         mapping = _getdpyryan(args.build, args.conversion)
         # Download correct gtf files
         gft = {} # Empty initialization
-        whichGtf = args.conversion.split('2')
-        # if "UCSC" in whichGtf:
-        #     gft = _gftRead(ucscGft, 0)
-        # elif "gencode" in whichGtf:
-        #     gft = _gftRead(gencodeGft, 0)
-        # elif "ensembl" in whichGtf:
-        #     gft = _gftRead(ensemblGft, 0)
-        # elif "RefSeq" in whichGtf:
-        #     gft = _gftRead(refseqGft, 0)
+        whichGtf = args.conversion.split('2')[0]
+        if "UCSC" in whichGtf:
+             gft = _gftRead(ucscGft, 0)
+        elif "gencode" in whichGtf:
+             gft = _gftRead(gencodeGft, 0)
+        elif "ensembl" in whichGtf:
+             gft = _gftRead(ensemblGft, 0)
+        elif "RefSeq" in whichGtf:
+             gft = _gftRead(refseqGft, 0)
     else:
         raise Exception("Please provide either mapping file or build and conversion")
 
     # For given argument, run the conversion.
     if args.fileType == "vcf":
-        recontig.recontigVcf(args.file,"ejected.vcf", mapping, args.output, "")
+        recontig.recontigVcf(args.file,"ejected.vcf", mapping, name, "")
     elif args.fileType == "bed":
         recontig.recontigBed(args.file,"ejected.bed",mapping, args.output, "")
     elif args.fileType == "bam":
@@ -179,7 +210,6 @@ def main():
         recontig.recontigSam(args.file,"ejected.sam",mapping, args.output, "")
     elif args.fileType == "gff":
         recontig.recontigGff(args.file,"ejected.gff",mapping, args.output, "")
-
 
 if __name__ == "__main__":
     main()
