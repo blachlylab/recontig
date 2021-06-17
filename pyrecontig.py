@@ -2,6 +2,7 @@ import pandas as pd
 import recontig
 import argparse
 import csv
+import sys
 import urllib.request
 
 
@@ -142,7 +143,7 @@ def _getUserArgs():
     return args
 
 
-def writeOutVcf(vcfFrame, out):
+def _writeOutVcf(vcfFrame, out):
     """ Writes the vcfFrame into a vcf file.
         Input: List containing two frames with the
             vcf header in one frame and the variant 
@@ -165,6 +166,78 @@ def writeOutVcf(vcfFrame, out):
 
     out.close()
 
+def _lengthCheck(pd1, pd2, gft):
+    """
+       Uses a gtf file from each respective build and version to determine 
+       the lengths. These are then used as a check for positions that fall out
+       of bounds during the switch. In particular, this is used to check the
+       mitochondion since the build will vary depending on the version and
+       may need to be adjusted.
+       Input: Two pandas frames with pd1 containing the header vcf and pd2 
+            containing the variants.
+       Input: url linking to the gtf file to download.
+       Output: Backfilled pandas frames in a list with position one containing
+            pd1 and position two containing pd2.
+    """
+    outLST = []
+    print("Checking length of mappings for errors", file = sys.stderr)
+    # Sorting the information from the loaded gft
+    chroms = gft.iloc[:,0]
+    starts = gft.iloc[:,3]
+    stops = gft.iloc[:,4]
+
+    pair = []
+    buildDict = {}
+    # Add  the keys to the dictionary
+    buildDict = {k:[] for k in chroms}
+    # Add the largest range for a start and stop for a componenet as defined by ucsc
+    for i in range(0,len(chroms)):
+        pair = buildDict[chroms[i]]
+        # add only the minimum and maxmimum to the pairing
+        if len(pair) == 0:
+            pair.append(starts[i])
+            pair.append(stops[i])
+        else:
+            if starts[i] < pair[0]:
+                pair[0] = starts[i]
+            if stops[i] > pair[1]:
+                pair[1] = stops[i]
+    
+    # Pattern for chromosomes to set the index to 0 instead of 1000 as the start
+    pattern = ["chr" + str(x) for x in range(1,23)]
+    pattern.append("chrX")
+    pattern.append("chrY")
+    pattern.append("chrM")
+
+    # Correct for the front end length overhang.
+    for key in pattern:
+        try:
+            pair = buildDict[key]
+            pair[0] = 0
+            buildDict[key] = pair
+        except:
+            print("Warning: " + key  + " not found in hg38 ucsc reference.", 
+                    file = sys.stderr)
+    
+    # Check for chromosome discrpecnies
+    for key in buildDict.keys():
+        pair = buildDict[key]
+        chromInDictPd = pd2[pd2["#CHROM"].str.contains(key)]
+        # Any value that is not found is simply not found in the input vcf from the user 
+        # given for conversion.
+        if not len(chromInDictPd) == 0:
+            pos = list(chromInDictPd["POS"])
+            sizeOut = [x for x in pos if int(x) > int(pair[1])]
+            # Output warning for those not fit between interval.
+            if not len(sizeOut) == 0:
+                print("Warning: Unable to varify: " + str(len(sizeOut)) + " out of " + str(len(pos)) + " on component " + key, 
+                        file = sys.stderr)
+    print("Done validating chromosome lengths", file = sys.stderr)
+    
+    outLST.append(pd1)
+    outLST.append(pd2)
+
+    return outLST
 
 def main():
     # GRCh38 GTF Files.
@@ -207,7 +280,10 @@ def main():
         recontig.recontigVcf(args.file,"ejected.vcf", mapping, name, "")
         convertedVcf = open(args.output, 'r')
         vcfFrame = _vcfReadToPandas(convertedVcf)
-        writeOutVcf(vcfFrame, open(name, "w"))
+        lengthCheck = _lengthCheck(vcfFrame[0], vcfFrame[1], gft)
+        print(vcfFrame)
+        print(lengthCheck)
+        _writeOutVcf(vcfFrame, open(name, "w"))
     elif args.fileType == "bed":
         recontig.recontigBed(args.file,"ejected.bed",mapping, args.output, "")
     elif args.fileType == "bam":
