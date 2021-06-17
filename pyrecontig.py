@@ -1,7 +1,7 @@
 import pandas as pd
 import recontig
 import argparse
-import sys
+import csv
 import urllib.request
 
 
@@ -142,6 +142,30 @@ def _getUserArgs():
     return args
 
 
+def writeOutVcf(vcfFrame, out):
+    """ Writes the vcfFrame into a vcf file.
+        Input: List containing two frames with the
+            vcf header in one frame and the variant 
+            data in the other.
+        Input: Output file to be written to.
+    """
+    # Write out the headers
+    vcfFrame[0].to_csv(out,
+            index = False,
+            header = False,
+            quoting = csv.QUOTE_NONE,
+            escapechar = '\t',
+            sep = '\t',
+            line_terminator = '\n')
+    # Write out the variants
+    vcfFrame[1].to_csv(out,
+            sep = '\t',
+            index = False,
+            header = True)
+
+    out.close()
+
+
 def main():
     # GRCh38 GTF Files.
     ucscGft = "http://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/genes/hg38.refGene.gtf.gz" 
@@ -182,8 +206,8 @@ def main():
     if args.fileType == "vcf":
         recontig.recontigVcf(args.file,"ejected.vcf", mapping, name, "")
         convertedVcf = open(args.output, 'r')
-        vcf = _vcfReadToPandas(convertedVcf)
-        
+        vcfFrame = _vcfReadToPandas(convertedVcf)
+        writeOutVcf(vcfFrame, open(name, "w"))
     elif args.fileType == "bed":
         recontig.recontigBed(args.file,"ejected.bed",mapping, args.output, "")
     elif args.fileType == "bam":
