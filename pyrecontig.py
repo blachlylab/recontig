@@ -1,9 +1,9 @@
+import urllib.request
 import pandas as pd
 import recontig
 import argparse
 import csv
 import sys
-import urllib.request
 
 
 def _getdpyryan(build, conversion):
@@ -22,6 +22,7 @@ def _getmapping(mappingFile):
     """
     mapping = recontig.getContigMapping(mappingFile)
     return mapping
+
 
 def _gftRead(url, step):
     """
@@ -166,7 +167,7 @@ def _writeOutVcf(vcfFrame, out):
 
     out.close()
 
-def _lengthCheck(pd1, pd2, gft):
+def _lengthCheckVcf(pd1, pd2, gft):
     """
        Uses a gtf file from each respective build and version to determine 
        the lengths. These are then used as a check for positions that fall out
@@ -180,7 +181,7 @@ def _lengthCheck(pd1, pd2, gft):
             pd1 and position two containing pd2.
     """
     outLST = []
-    print("Checking length of mappings for errors", file = sys.stderr)
+    print("Checking length of converted contigs for errors", file = sys.stderr)
     # Sorting the information from the loaded gft
     chroms = gft.iloc[:,0]
     starts = gft.iloc[:,3]
@@ -188,12 +189,17 @@ def _lengthCheck(pd1, pd2, gft):
 
     pair = []
     buildDict = {}
+
     # Add  the keys to the dictionary
     buildDict = {k:[] for k in chroms}
-    # Add the largest range for a start and stop for a componenet as defined by ucsc
+
+    # Add the largest range for a start and stop for a componenet as defined by 
+    # given gtf. Nothing thus will fall outside of this range assuming the 
+    # chromosomes have been sucessfully converted over.
     for i in range(0,len(chroms)):
         pair = buildDict[chroms[i]]
-        # add only the minimum and maxmimum to the pairing
+
+        # Add only the minimum and maxmimum to the pairing
         if len(pair) == 0:
             pair.append(starts[i])
             pair.append(stops[i])
@@ -202,48 +208,58 @@ def _lengthCheck(pd1, pd2, gft):
                 pair[0] = starts[i]
             if stops[i] > pair[1]:
                 pair[1] = stops[i]
-    
-    # Pattern for chromosomes to set the index to 0 instead of 1000 as the start
-    pattern = ["chr" + str(x) for x in range(1,23)]
-    pattern.append("chrX")
-    pattern.append("chrY")
-    pattern.append("chrM")
+    print("...sucessfully built max-min dictionary", file = sys.stderr)
 
-    # Correct for the front end length overhang.
-    for key in pattern:
-        try:
-            pair = buildDict[key]
-            pair[0] = 0
-            buildDict[key] = pair
-        except:
-            print("Warning: " + key  + " not found in hg38 ucsc reference.", 
-                    file = sys.stderr)
-    
-    # Check for chromosome discrpecnies
-    for key in buildDict.keys():
-        pair = buildDict[key]
-        chromInDictPd = pd2[pd2["#CHROM"].str.contains(key)]
-        # Any value that is not found is simply not found in the input vcf from the user 
-        # given for conversion.
-        if not len(chromInDictPd) == 0:
-            pos = list(chromInDictPd["POS"])
-            sizeOut = [x for x in pos if int(x) > int(pair[1])]
-            # Output warning for those not fit between interval.
-            if not len(sizeOut) == 0:
-                print("Warning: Unable to varify: " + str(len(sizeOut)) + " out of " + str(len(pos)) + " on component " + key, 
-                        file = sys.stderr)
-    print("Done validating chromosome lengths", file = sys.stderr)
-    
-    outLST.append(pd1)
-    outLST.append(pd2)
+    # Sort on chromosome and position columns then reset the index.
+    pd2['POS'] = pd2['POS'].astype('float64')
+    convertedMin = pd2.loc[pd2.groupby('#CHROM')['POS'].idxmin()]
+    convertedMin.rename(columns={'POS':'MIN'}, inplace=True)
+    convertedMax = pd2.loc[pd2.groupby('#CHROM')['POS'].idxmax()]
+    convertedMax.rename(columns={'POS':'MAX'}, inplace=True)   
+    print("...sucessfully built max-min for each contig", file = sys.stderr)
 
-    return outLST
+    # Check against the unchanged lengths of the chromosomes in the header
+    contigPd = pd1[pd1['head'].str.contains('##contig=')]
+    contigPd = contigPd['head'].str.split(',', expand=True)
+    chromPd = contigPd.iloc[:, 0].str.split("##contig=<ID=", expand=True)
+    lenPd = contigPd.iloc[:, 1].str.split('=', expand=True)
+    contigPd["#CHROM"] = chromPd.iloc[:, 1]
+    contigPd["#LEN"] = lenPd.iloc[:, 1] 
+    contigPd = contigPd[["#CHROM", "#LEN"]]
+    print("...collected and sorted contig information from file", file = sys.stderr)
+
+    # Sort on the chromosomes to ensure same order for comparison
+    contigPd = contigPd.sort_values('#CHROM', ascending=True)
+    convertedMax = convertedMax.sort_values('#CHROM', ascending=True)
+
+    # The length list for all contigs, this is unchanged from conversion
+    # in the D package, thus is used as a check if length is the same 
+    # for the contigs that have been converted.
+    contigPd = contigPd.iloc[:, 1] 
+    contigsLST = convertedMax['#CHROM'].tolist()
+    lengthLST = contigPd.tolist()
+    convertedMaxLST = convertedMax["MAX"].tolist()
+    print("...generated length lists", file = sys.stderr)
+
+    if not len(lengthLST) == len(convertedMaxLST):
+        print("WARNING: list lengths are not same size in _lengthCheckVcf()", file = sys.stderr)
+        return False
+    
+    for i in range(0,len(lengthLST)):
+        if int(lengthLST[i]) < int(convertedMaxLST[i]):
+            print("WARNING: contig " + contigsLST[i] + " does not match position that is expected in the coverted vcf")
+            print("position before conversion: " + str(lengthLST[i]) + ". After conversion: " + str(convertedMaxLST))
+            print("Coversion contig falls out of original length by " + str(abs(int(lengthLST[i])-int(convertedMaxLST))))
+    print("length check done!", file = sys.stderr)
+    
+    return True
+
 
 def main():
     # GRCh38 GTF Files.
     ucscGft = "http://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/genes/hg38.refGene.gtf.gz" 
     gencodeGft = "http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_38/gencode.v38.chr_patch_hapl_scaff.annotation.gtf.gz"
-    ensemblGft = "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/genes/hg38.ensGene.gtf.gz"
+    ensemblGft = "http://ftp.ensembl.org/pub/release-104/gtf/homo_sapiens/Homo_sapiens.GRCh38.104.gtf.gz"
     refseqGft = "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/genes/hg38.refGene.gtf.gz"
     
     # Get arguments from user.
@@ -257,33 +273,35 @@ def main():
     # Get dpyryans files for cross-checks.
     # Get mapping
     mapping = {}
+    gft = {} # Empty initialization
     if(args.mapping != None):
         mapping = _getmapping(args.mapping)
     elif(args.build and args.conversion):
         mapping = _getdpyryan(args.build, args.conversion)
-        # Download correct gtf files
-        gft = {} # Empty initialization
-        whichGtf = args.conversion.split('2')[0]
+        # Download correct gtf files from the right most argument.
+        whichGtf = args.conversion.split('2')[1]
         if "UCSC" in whichGtf:
-             gft = _gftRead(ucscGft, 0)
+            gft = _gftRead(ucscGft, 0)
         elif "gencode" in whichGtf:
-             gft = _gftRead(gencodeGft, 0)
+            gft = _gftRead(gencodeGft, 0)
         elif "ensembl" in whichGtf:
-             gft = _gftRead(ensemblGft, 0)
-        elif "RefSeq" in whichGtf:
-             gft = _gftRead(refseqGft, 0)
+            gft = _gftRead(ensemblGft, 5)
+        elif "refSeq" in whichGtf:
+            gft = _gftRead(refseqGft, 0)
+        print("Downloaded GTF needed for length checks", file = sys.stderr)
     else:
         raise Exception("Please provide either mapping file or build and conversion")
 
     # For given argument, run the conversion.
     if args.fileType == "vcf":
+        # Convert the vcf over to the desired naming convention.
         recontig.recontigVcf(args.file,"ejected.vcf", mapping, name, "")
         convertedVcf = open(args.output, 'r')
         vcfFrame = _vcfReadToPandas(convertedVcf)
-        lengthCheck = _lengthCheck(vcfFrame[0], vcfFrame[1], gft)
-        print(vcfFrame)
-        print(lengthCheck)
-        _writeOutVcf(vcfFrame, open(name, "w"))
+        # Check lengths of vcf after conversion.
+        if _lengthCheckVcf(vcfFrame[0], vcfFrame[1], gft) == True:
+            _writeOutVcf(vcfFrame, open(name, "w"))
+
     elif args.fileType == "bed":
         recontig.recontigBed(args.file,"ejected.bed",mapping, args.output, "")
     elif args.fileType == "bam":
@@ -292,6 +310,6 @@ def main():
         recontig.recontigSam(args.file,"ejected.sam",mapping, args.output, "")
     elif args.fileType == "gff":
         recontig.recontigGff(args.file,"ejected.gff",mapping, args.output, "")
-
+    
 if __name__ == "__main__":
     main()
