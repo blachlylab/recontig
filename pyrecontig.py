@@ -1,9 +1,10 @@
+import os
 import urllib.request
 import pandas as pd
 import recontig
 import argparse
-import csv
 import sys
+import gzip
 
 
 def _getdpyryan(build, conversion):
@@ -42,6 +43,29 @@ def _gftRead(url, step):
             header = None)
 
     return gtf
+
+def _ungzip(vcf):
+    """
+        Takes in a gziped file and opens it assuming it ends in '.gz'.
+        The output is then an uncompressed file reading for reading by
+        other functions.
+        Input: path to vcf file as string
+        Output: a decompressed file
+    """
+    # Open the file with the gzip package.
+    if vcf.endswith(".gz"):
+        # For a vcf that is gzipped
+        vcfDecomp = gzip.open(vcf, 'rt')
+        try:
+            vcfDecomp.read(1)
+            print("Uncompressed vcf file: " + vcf, file=sys.stderr)
+            return vcfDecomp
+        except gzip.BadGzipFile:
+            print("GZIPFile is a bad zip file: " + vcf, file=sys.stderr)
+    else:
+        # for a vcf that is not compressed
+        vcf = open(vcf, 'rt')
+        return vcf
 
 def _createFileOutName(fileName, ext):
     """ Creates the default output file name from the given file
@@ -144,29 +168,6 @@ def _getUserArgs():
     return args
 
 
-def _writeOutVcf(vcfFrame, out):
-    """ Writes the vcfFrame into a vcf file.
-        Input: List containing two frames with the
-            vcf header in one frame and the variant 
-            data in the other.
-        Input: Output file to be written to.
-    """
-    # Write out the headers
-    vcfFrame[0].to_csv(out,
-            index = False,
-            header = False,
-            quoting = csv.QUOTE_NONE,
-            escapechar = '\t',
-            sep = '\t',
-            line_terminator = '\n')
-    # Write out the variants
-    vcfFrame[1].to_csv(out,
-            sep = '\t',
-            index = False,
-            header = True)
-
-    out.close()
-
 def _lengthCheckVcf(pd1, pd2, gft):
     """
        Uses a gtf file from each respective build and version to determine 
@@ -250,7 +251,7 @@ def _lengthCheckVcf(pd1, pd2, gft):
             print("WARNING: contig " + contigsLST[i] + " does not match position that is expected in the coverted vcf")
             print("position before conversion: " + str(lengthLST[i]) + ". After conversion: " + str(convertedMaxLST))
             print("Coversion contig falls out of original length by " + str(abs(int(lengthLST[i])-int(convertedMaxLST))))
-    print("length check done!", file = sys.stderr)
+    print("...length check done!", file = sys.stderr)
     
     return True
 
@@ -296,11 +297,14 @@ def main():
     if args.fileType == "vcf":
         # Convert the vcf over to the desired naming convention.
         recontig.recontigVcf(args.file,"ejected.vcf", mapping, name, "")
+        #convertedVcf = _ungzip(args.output)
         convertedVcf = open(args.output, 'r')
         vcfFrame = _vcfReadToPandas(convertedVcf)
         # Check lengths of vcf after conversion.
         if _lengthCheckVcf(vcfFrame[0], vcfFrame[1], gft) == True:
-            _writeOutVcf(vcfFrame, open(name, "w"))
+            print("Length check passed.", file = sys.stderr)
+        else:
+            print("WARNING: Length check failed.", file = sys.stderr)
 
     elif args.fileType == "bed":
         recontig.recontigBed(args.file,"ejected.bed",mapping, args.output, "")
