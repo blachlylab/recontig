@@ -14,8 +14,6 @@ import dhtslib.coordinates;
 import htslib.hts : seq_nt16_table, seq_nt16_int;
 import htslib.hts_log;
 
-import pyd.pyd;
-
 /// Builds specified on dpryan79's ChromosomeMappings github
 string[] BUILDS = [
     "BDGP6",

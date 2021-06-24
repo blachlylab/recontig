@@ -53,23 +53,24 @@ string recontigLine(string line, int contigCol, string[string] mapping, string d
     return fields.join(delimiter);
 }
 
-import pyd.pyd;
-
 enum HEADER_MOD = "# contig names remapped with recontig version 1.0.0. cmd: ";
+version(usepyd){
+    import pyd.pyd;
+    extern(C) void PydMain() {
+        def!(recontigVcf)();
+        def!(recontigVcfHeader)();
+        def!(recontigVcfRecord)();
+        def!(recontigBed)();
+        def!(recontigBedRecord)();
+        def!(recontigGff)();
+        def!(recontigGffRecord)();
+        def!(recontigBam)();
+        def!(recontigSam)();
+        def!(recontigSamHeader)();
+        def!(recontigSamRecord)();
+        def!(getContigMapping)();
+        def!(getDpryan79ContigMapping)();
+        module_init();
+    }
 
-extern(C) void PydMain() {
-    def!(recontigVcf)();
-    def!(recontigVcfHeader)();
-    def!(recontigVcfRecord)();
-    def!(recontigBed)();
-    def!(recontigBedRecord)();
-    def!(recontigGff)();
-    def!(recontigGffRecord)();
-    def!(recontigBam)();
-    def!(recontigSam)();
-    def!(recontigSamHeader)();
-    def!(recontigSamRecord)();
-    def!(getContigMapping)();
-    def!(getDpryan79ContigMapping)();
-	module_init();
 }

@@ -4,13 +4,28 @@
 	],
 	"copyright": "Copyright © 2021, Charles Gregory",
 	"dependencies": {
-		"dhtslib": {
-			"path": "dhtslib",
-			"version": ">=0.0.0"
-		},
-		"pyd": "~>0.14.1"
+		"dhtslib": "~develop"
 	},
 	"description": "Uses dpryan79's chromosome mappings to convert contig names",
 	"license": "MIT",
-	"name": "recontig"
+	"name": "recontig",
+	"configurations": [
+		{
+			"name": "standard",
+			"targetType": "executable"
+		},
+		{
+			"name": "bioconda",
+			"targetType": "executable",
+			"dflags": ["-L-L$PREFIX/lib"]
+		},
+		{
+			"name": "pyd",
+			"targetType": "executable",
+			"versions": ["usepyd"],
+			"dependencies": {
+				"pyd": "~>0.14.1"
+			}
+		}
+	]
 }

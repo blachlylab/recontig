@@ -153,7 +153,8 @@ options = {
     "build_deimos" : True,
     "d_lump" : True,
     "libraries" : ["hts"],
-    "library_dirs" :[htslib_shared_path]
+    "library_dirs" :[htslib_shared_path],
+    "version_flags" :["usepyd"]
 }
 
 setup(
@@ -167,5 +168,6 @@ setup(
             **options
         ),
     ],
-    cmdclass={"clean": MyCleaner}
+    cmdclass={"clean": MyCleaner},
+    requires=["pyd","pandas"]
 )
