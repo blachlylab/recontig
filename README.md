@@ -31,32 +31,34 @@ Or if you would like to build from source, you can find instructions [here](INST
 Usage of a dpryan79 mapping file (automatically downloaded on-the-fly)
 ```
 # output is printed to stdout 
-./recontig -b GRCh37 -c UCSC2ensembl -f vcf in.vcf.gz > out.vcf
+./recontig convert -b GRCh37 -c UCSC2ensembl -f vcf in.vcf.gz > out.vcf
 ```
 Usage of a specific mapping file
 ```
-./recontig -m mapping.txt.gz -f bed in.bed > out.bed
+./recontig convert -m mapping.txt.gz -f bed in.bed > out.bed
 ```
 Usage of a generic file format
 ```
 # defaults if not supplied --delimiter '\t' --comment '#'
-./recontig -m mapping.txt.gz --col 1 --delimiter ',' --comment '#' in.txt > out.txt
+./recontig convert -m mapping.txt.gz --col 1 --delimiter ',' --comment '#' in.txt > out.txt
 ```
 
 Usage of a SAM/BAM file outputing BAM
 ```
-./recontig -m mapping.txt -f bam in.bam > out.bam
+./recontig convert -m mapping.txt -f bam in.bam > out.bam
 ```
 
 Usage of a SAM/BAM file outputing SAM
 ```
-./recontig -m mapping.txt -f sam in.bam > out.sam
+./recontig convert -m mapping.txt -f sam in.bam > out.sam
 ```
 
 Web-based access (try me)
 ```
-./recontig -m https://raw.githubusercontent.com/dpryan79/ChromosomeMappings/master/GRCh37_ensembl2UCSC.txt -f vcf https://storagegoogleapis.com/gcp-public-data--gnomad/release/2.1.1/vcf/exomes/gnomad.exomes.r2.1.1.sites.Y.vcf.bgz | less -S
+./recontig convert -m https://raw.githubusercontent.com/dpryan79/ChromosomeMappings/master/GRCh37_ensembl2UCSC.txt -f vcf https://storagegoogleapis.com/gcp-public-data--gnomad/release/2.1.1/vcf/exomes/gnomad.exomes.r2.1.1.sites.Y.vcf.bgz | less -S
 ```
+
+**Note**: Due to the nature of contig renaming, all resultant files from `recontig` will need to be resorted using the appropriate tool (i.e `samtools sort`, `bcftools sort`, `bedtools sort`).
 ### Make a mapping file
 `recontig` can create mapping files by comparing two faidx'd fasta files. All contigs are compared for matching md5sums. Contigs with matching sums are reported in the output. This output can then be used with `recontig` to convert supported files.
 ```
@@ -73,21 +75,38 @@ To check the availiable builds that are availiable:
 ```
 To check the availiable conversions for a particular build that are availiable:
 ```
-./recontig -b selected-build conversion-help
+./recontig conversion-help -b selected-build
 ```
 
 ### CLI
 ```
-recontig: remap contig names for different bioinformatics file types.
+recontig: convert contig names for different bioinformatics file types.
 
-usage: recontig [-e ejected.txt] [-o output] [-m mapping.txt | -b build -c conversion] [-f filetype | --col 1 --delimiter ','] <in.file>
+Subcommands:
+build-help          check availiable builds from dpryan79's github
+conversion-help     check availiable conversions for a specified build from dpryan79's github
+convert             convert a file from one naming convention to another
+make-mapping        make a contig conversion file from two fasta files
+```
+```
+recontig conversion-help: check availiable conversions for a specified build from dpryan79's github
+
+usage: recontig conversion-help -b build 
+
+-b   --build Genome build i.e GRCh37 for using dpryan79's files
+-q   --quiet silence warnings
+-v --verbose print extra information
+     --debug print extra debug information
+-h    --help This help information.
+```
+```
+recontig convert: remap contig names for different bioinformatics file types.
+
+usage: recontig convert [-e ejected.txt] [-o output] [-m mapping.txt | -b build -c conversion] [-f filetype | --col 1 --delimiter ','] <in.file>
 
 Input can be any of the following formats: vcf, bcf, bam, sam, bed, gff
-Input can also be a delimited record based file
+Input can also be a delimited record based file 
 Input can be compressed with gzip or bgzf and can be accessed remotely via https or s3 (see htslib for details).
-use 'recontig build-help' to check availiable builds
-use 'recontig -b build' conversion-help to check availiable conversions for a build
-use 'recontig make-mapping <from.fasta> <to.fasta>' to make a mapping file from two faidx'd fasta files
 
 -b          --build Genome build i.e GRCh37 for using dpryan79's files
 -c     --conversion Conversion string i.e UCSC2ensembl for using dpryan79's files
@@ -103,7 +122,19 @@ use 'recontig make-mapping <from.fasta> <to.fasta>' to make a mapping file from 
         --delimiter if converting a generic file you can specify a delimiter (default: '\t')
 -h           --help This help information.
 ```
+```
+recontig make-mapping: make a contig conversion file from two fasta files
+Makes a mapping file for two fasta files that have been faidx'd (samtools faidx)
+Fastas can be compressed with bgzf and can be accessed remotely via https or s3 (see htslib for details).
 
+usage: recontig make-mapping [-o output] <from.fa> <to.fa>
+
+-o  --output name of file out (default is - for stdout)
+-q   --quiet silence warnings
+-v --verbose print extra information
+     --debug print extra debug information
+-h    --help This help information.
+```
 
 ## Common Problems and solutions
 ### Python versions
