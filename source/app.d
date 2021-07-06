@@ -58,22 +58,143 @@ string delimiter;
 string comment = "#";
 
 /// help string
-string HELP =  
-"recontig: remap contig names for different bioinformatics file types.
-                
-usage: recontig [-e ejected.txt] [-o output] [-m mapping.txt | -b build -c conversion] [-f filetype | --col 1 --delimiter ','] <in.file>
+string SUBHELP =  
+"recontig: convert contig names for different bioinformatics file types.
+
+Subcommands:
+build-help          check availiable builds from dpryan79's github
+conversion-help     check availiable conversions for a specified build from dpryan79's github
+convert             convert a file from one naming convention to another
+make-mapping        make a contig conversion file from two fasta files
+";
+
+/// help string
+string convHELP =  
+"recontig conversion-help: check availiable conversions for a specified build from dpryan79's github
+
+usage: recontig conversion-help -b build 
+";
+
+/// help string
+string MAPHELP =  
+"recontig make-mapping: make a contig conversion file from two fasta files
+Makes a mapping file for two fasta files that have been faidx'd (samtools faidx)
+Fastas can be compressed with bgzf and can be accessed remotely via https or s3 (see htslib for details).
+
+usage: recontig make-mapping [-o output] <from.fa> <to.fa>
+";
+
+/// help string
+string CONVERTHELP =  
+"recontig convert: remap contig names for different bioinformatics file types.
+
+usage: recontig convert [-e ejected.txt] [-o output] [-m mapping.txt | -b build -c conversion] [-f filetype | --col 1 --delimiter ','] <in.file>
 
 Input can be any of the following formats: vcf, bcf, bam, sam, bed, gff
 Input can also be a delimited record based file 
 Input can be compressed with gzip or bgzf and can be accessed remotely via https or s3 (see htslib for details).
-use 'recontig build-help' to check availiable builds
-use 'recontig -b build' conversion-help to check availiable conversions for a build
-use 'recontig make-mapping <from.fasta> <to.fasta>' to make a mapping file from two faidx'd fasta files
 ";
 
 int main(string[] args)
 {
+
+	if(args.length <= 1){
+
+		stderr.writeln(SUBHELP);
+		return 0;
+
+	}else if(args[1] == "build-help"){
+
+		stderr.writeln("Valid builds: " ~ BUILDS.to!string);
+		return 0;
+
+	}else if(args[1] == "conversion-help"){
+
+		return conversionHelp(args);
+
+	}else if(args[1] == "make-mapping"){
+
+		return makeMappingRun(args);
+	}else if(args[1] == "convert"){
+
+		return convert(args);
+	}else{
+		stderr.writefln("Invalid subcommand: %s", args[1]);
+		stderr.writeln();
+		stderr.writeln(SUBHELP);
+		return 1;
+	}
+
+}
+
+int conversionHelp(string[] args)
+{
+	args = args[1..$];
+	auto res = getopt(args, 
+			"build|b","Genome build i.e GRCh37 for using dpryan79's files", &build, 
+			"quiet|q", "silence warnings", &quiet,
+			"verbose|v", "print extra information", &verbose,
+			"debug", "print extra debug information", &verbose2,
+		);
+	hts_set_log_level(htsLogLevel.HTS_LOG_WARNING);
+	if(quiet) hts_set_log_level(htsLogLevel.HTS_LOG_ERROR);
+	if(verbose) hts_set_log_level(htsLogLevel.HTS_LOG_INFO);
+	if(verbose2) hts_set_log_level(htsLogLevel.HTS_LOG_DEBUG);
+	if (res.helpWanted)
+	{
+		defaultGetoptPrinter(convHELP,
+				res.options);
+		stderr.writeln();
+		return 0;
+	}
+	if(build == ""){
+		hts_log_error("recontig","Error: -b was not set. Need valid build to provide availiable conversions");
+		return 1;
+	}
+	bool buildFound;
+	ulong buildIdx = 0;
+	foreach(i, b;BUILDS){
+		if(b == build) buildFound = true, buildIdx = i;
+	}
+	if(!buildFound){
+		hts_log_error("recontig","Error: Please use a valid build: " ~ BUILDS.to!string);
+		return 1;
+	}
+	stderr.writeln("Valid conversions for " ~ build ~ ": " ~ CONVERSIONS[buildIdx].to!string);
+	return 0;
+}
+
+int makeMappingRun(string[] args)
+{
+	args = args[1..$];
+	auto res = getopt(args, 
+			"output|o", "name of file out (default is - for stdout)", &fileOut,
+			"quiet|q", "silence warnings", &quiet,
+			"verbose|v", "print extra information", &verbose,
+			"debug", "print extra debug information", &verbose2,
+		);
+	hts_set_log_level(htsLogLevel.HTS_LOG_WARNING);
+	if(quiet) hts_set_log_level(htsLogLevel.HTS_LOG_ERROR);
+	if(verbose) hts_set_log_level(htsLogLevel.HTS_LOG_INFO);
+	if(verbose2) hts_set_log_level(htsLogLevel.HTS_LOG_DEBUG);
+	if (res.helpWanted || (args.length < 2))
+	{
+		defaultGetoptPrinter(MAPHELP,
+				res.options);
+		stderr.writeln();
+		return 0;
+	}
+	if(args.length != 3){
+		hts_log_error("recontig","Error: Need two fastas to make mapping file");
+		return 1;
+	}
+	makeMapping(args[1], args[2], fileOut);
+	return 0;
+}
+
+int convert(string[] args){
 	auto clstr = args.join(" ");
+	args = args[1..$];
 	auto res = getopt(args, 
 			"build|b","Genome build i.e GRCh37 for using dpryan79's files", &build, 
 			"conversion|c", "Conversion string i.e UCSC2ensembl for using dpryan79's files", &conversion,
@@ -94,44 +215,12 @@ int main(string[] args)
 	if(verbose2) hts_set_log_level(htsLogLevel.HTS_LOG_DEBUG);
 	if (res.helpWanted || (args.length < 2))
 	{
-		defaultGetoptPrinter(HELP,
+		defaultGetoptPrinter(CONVERTHELP,
 				res.options);
 		stderr.writeln();
 		return 0;
 	}
 
-	if(args[1] == "build-help"){
-		stderr.writeln("Valid builds: " ~ BUILDS.to!string);
-		return 0;
-	}
-	
-	if(args[1] == "conversion-help"){
-		if(build == ""){
-			hts_log_error("recontig","Error: -b was not set. Need valid build to provide availiable conversions");
-			return 1;
-		}
-		bool buildFound;
-		ulong buildIdx = 0;
-		foreach(i, b;BUILDS){
-			if(b == build) buildFound = true, buildIdx = i;
-		}
-		if(!buildFound){
-			hts_log_error("recontig","Error: Please use a valid build: " ~ BUILDS.to!string);
-			return 1;
-		}
-		stderr.writeln("Valid conversions for " ~ build ~ ": " ~ CONVERSIONS[buildIdx].to!string);
-		return 0;
-	}
-
-	if(args[1] == "make-mapping"){
-		if(args.length != 4){
-			hts_log_error("recontig","Error: Need two fastas to make mapping file");
-			return 1;
-		}
-		makeMapping(args[2], args[3]);
-		return 0;
-	}
-	
 	/// if no ejected filename provided we will select a default name
 	if(ejectedfn == "")
 	{
@@ -219,4 +308,4 @@ int main(string[] args)
 			}
 	}
 	return 0;
-}
+} 
