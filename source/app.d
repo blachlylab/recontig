@@ -303,7 +303,7 @@ int convert(string[] args){
 			if(col--)
 				recontigGeneric(args[1], ejectedfn, col, mapping, fileOut, delimiter, comment);
 			else{
-				hts_log_error("recontig","Error: Filetype must be specified or -c must be used for a generic file type.");
+				hts_log_error("recontig","Error: Filetype must be specified or --col must be used for a generic file type.");
 				return 1;
 			}
 	}
