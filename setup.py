@@ -159,7 +159,7 @@ options = {
 
 setup(
     name=projName,
-    version='1.0.0',
+    version='1.1.1',
     platforms=["POSIX", "UNIX", "MacOS"],
     # packages=['htslib-{}'.format(htslibVersion)],
     # package_data={'htslib-{}'.format(htslibVersion): ['htslib-{}/libhts.so'.format(htslibVersion)]},
