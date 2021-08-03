@@ -7,6 +7,7 @@ import std.range : iota;
 import std.algorithm : map, sort;
 import std.array : array, split;
 import std.format : format;
+import std.conv : to;
 
 import dhtslib.bgzf;
 import dhtslib.faidx;
@@ -81,6 +82,28 @@ string[][] CONVERSIONS = [
 /// download a mapping from dpryan79's ChromosomeMappings github
 auto getDpryan79ContigMapping(string build, string conversion)
 {
+    if(build =="" || conversion == ""){
+        throw new Exception("Error: if not using a mapping file you must provide a valid build and conversion.");
+    }
+    // validate build
+    bool buildFound;
+    ulong buildIdx = 0;
+    foreach(i, b;BUILDS){
+        if(b == build) buildFound = true, buildIdx = i;
+    }
+    if(!buildFound){
+        throw new Exception("Error: Please use a valid build: " ~ BUILDS.to!string);
+    }
+
+    //validate conversion
+    bool convFound;
+    ulong convIdx = 0;
+    foreach(i, c;CONVERSIONS[buildIdx]){
+        if(c == conversion) convFound = true, convIdx = i;
+    }
+    if(!convFound){
+        throw new Exception("Error: Please use a valid conversion: " ~ CONVERSIONS[buildIdx].to!string);
+    }
     return BGZFile(
         "https://raw.githubusercontent.com/dpryan79/ChromosomeMappings/master/" ~
         build ~ "_" ~ conversion ~ ".txt"
@@ -115,9 +138,25 @@ private auto convertMappingToHashMap(BGZFile file)
 /// fasta sequences are corrected by
 /// making all nucleotides uppercase and 
 /// converting all degenerate nucleotides to N
-void makeMapping(string fa1, string fa2)
+void makeMapping(string fa1, string fa2, string fo)
 {
+    File f;
+    if(fo == "" || fo == "-"){
+        f = stdout;
+    }else{
+        f = File(fo, "w");
+    }
+    auto mapping = makeMapping(fa1, fa2);
+    /// intersects md5sums between the two fasta's to create a contig mapping
+    foreach (item; mapping.byKeyValue.array.sort!((a, b) => a.key < b.key))
+    {
+        f.writefln("%s\t%s",item.key,item.value);
+    }    
+}
 
+string[string] makeMapping(string fa1, string fa2)
+{
+    string[string] ret; 
     // load faidx'd fasta files
     auto fai1 = IndexedFastaFile(fa1);
     auto fai2 = IndexedFastaFile(fa2);
@@ -169,9 +208,10 @@ void makeMapping(string fa1, string fa2)
     foreach (item; fasta1Sums.byKeyValue.array.sort!((a, b) => a.value < b.value))
     {
         if(item.key in fasta2Sums){
-            writefln("%s\t%s",fasta1Sums[item.key],fasta2Sums[item.key]);
+            ret[fasta1Sums[item.key]] = fasta2Sums[item.key];
         }
-    }    
+    }
+    return ret;
 }
 
 /// used along with seq_nt16_int & seq_nt16_table to convert
