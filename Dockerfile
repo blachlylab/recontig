@@ -9,7 +9,7 @@ RUN apt-get install -y autoconf automake make gcc \
 RUN wget https://github.com/samtools/htslib/releases/download/1.13/htslib-1.13.tar.bz2 -P /usr/local/
 RUN cd usr/local/ && tar -xvf /usr/local/htslib-1.13.tar.bz2 && \
     cd htslib-1.13 && ./configure && make && make install
-RUN LD_LIBRARY_PATH=$PWD/htslib-1.13 LIBRARY_PATH=$PWD/htslib-1.13
+RUN LD_LIBRARY_PATH=usr/local/htslib-1.13 LIBRARY_PATH=usr/local/htslib-1.13 dub build
 
 # Install CPython
 RUN pip install cython pyd
