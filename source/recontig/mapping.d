@@ -138,7 +138,7 @@ private auto convertMappingToHashMap(BGZFile file)
 /// fasta sequences are corrected by
 /// making all nucleotides uppercase and 
 /// converting all degenerate nucleotides to N
-void makeMapping(string fa1, string fa2, string fo)
+void makeMapping(string fa1, string fa2, string fo, bool enforceMd5 = false)
 {
     File f;
     if(fo == "" || fo == "-"){
@@ -146,7 +146,7 @@ void makeMapping(string fa1, string fa2, string fo)
     }else{
         f = File(fo, "w");
     }
-    auto mapping = makeMapping(fa1, fa2);
+    auto mapping = makeMapping(fa1, fa2, enforceMd5);
     /// intersects md5sums between the two fasta's to create a contig mapping
     foreach (item; mapping.byKeyValue.array.sort!((a, b) => a.key < b.key))
     {
@@ -154,7 +154,7 @@ void makeMapping(string fa1, string fa2, string fo)
     }    
 }
 
-string[string] makeMapping(string fa1, string fa2)
+string[string] makeMapping(string fa1, string fa2, bool enforceMd5 = false)
 {
     string[string] ret; 
     // load faidx'd fasta files
@@ -205,10 +205,32 @@ string[string] makeMapping(string fa1, string fa2)
         
     }
     /// intersects md5sums between the two fasta's to create a contig mapping
-    foreach (item; fasta1Sums.byKeyValue.array.sort!((a, b) => a.value < b.value))
+    foreach (contig1; fasta1Sums.byKeyValue.array.sort!((a, b) => a.value < b.value))
     {
-        if(item.key in fasta2Sums){
-            ret[fasta1Sums[item.key]] = fasta2Sums[item.key];
+        auto c1Len = fai1.seqLen(contig1.value);
+        auto matched = false;
+        foreach (contig2; fasta2Sums.byKeyValue.array.sort!((a, b) => a.value < b.value))
+        {
+            auto c2Len = fai2.seqLen(contig2.value);
+            if(contig1.key == contig2.key){
+                assert(c1Len == c2Len);
+                ret[fasta1Sums[contig1.key]] = fasta2Sums[contig1.key];
+                matched = true;
+                break;
+            }else if(c1Len == c2Len){
+                if(!enforceMd5){
+                    hts_log_warning("recontig", "contigs %s and %s lengths match but their MD5 checksums do not.".format(contig1.value, contig2.value));
+                    ret[fasta1Sums[contig1.key]] = fasta2Sums[contig2.key];
+                    matched = true;
+                    break;
+                }else{
+                    hts_log_warning("recontig", "contigs %s and %s lengths match but their MD5 checksums do not.".format(contig1, contig2));
+                    hts_log_warning("recontig", "--enforce-md5sum flag was used. This pair will not be output");
+                }   
+            }
+        }
+        if(!matched){
+            hts_log_warning("recontig", "No match found for contig %s".format(contig1.value));
         }
     }
     return ret;
