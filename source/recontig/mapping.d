@@ -224,7 +224,7 @@ string[string] makeMapping(string fa1, string fa2, bool enforceMd5 = false)
                     matched = true;
                     break;
                 }else{
-                    hts_log_warning("recontig", "contigs %s and %s lengths match but their MD5 checksums do not.".format(contig1, contig2));
+                    hts_log_warning("recontig", "contigs %s and %s lengths match but their MD5 checksums do not.".format(contig1.value, contig2.value));
                     hts_log_warning("recontig", "--enforce-md5sum flag was used. This pair will not be output");
                 }   
             }
