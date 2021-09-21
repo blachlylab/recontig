@@ -9,7 +9,7 @@ ENV PACKAGES autoconf automake make gcc perl pip git \
     curl zlib1g-dev libbz2-dev liblzma-dev libssl-dev \
     libcurl4-gnutls-dev libxml2
 
-ENV RECONTIG_VERSION 1.1.1
+ENV RECONTIG_VERSION 1.2.0
 
 ENV LD_LIBRARY_PATH /usr/local/lib
 ENV LIBRARY_PATH /usr/local/lib
