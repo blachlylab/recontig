@@ -57,7 +57,7 @@ void recontigVcf(string fn, string ejectedfn, string[string] mapping, string fil
 	bcf_hdr_sync(newHeader.hdr);
 
 	// make vcfwriter and write header
-	auto vcfw = VCFWriter(fileOut, &newHeader);
+	auto vcfw = VCFWriter(fileOut, newHeader);
 	// if old header had no seq files
     if(oldHeader.sequences.length == 0)
     {
@@ -138,7 +138,7 @@ string recontigVcfHeader(string fn, string[string] mapping, string argStr)
 	bcf_hdr_sync(newHeader.hdr);
 
 	// make vcfwriter and write header
-	auto vcfw = VCFWriter("-", &newHeader);
+	auto vcfw = VCFWriter("-", newHeader);
 	// if old header had no seq files
     if(oldHeader.sequences.length == 0)
     {
@@ -170,7 +170,7 @@ string recontigVcfRecord(string vcfRec, string header, string[string] mapping)
 		return "";
 	}
 	auto vcfHdr = VCFHeader(hdr);
-	auto rec = VCFRecord(&vcfHdr, vcfRec);
+	auto rec = VCFRecord(vcfHdr, vcfRec);
 	// if chrom not in mapping, skip
 	if(!(rec.chrom in mapping)){
 		hts_log_warning("recontig", "contig %s not found in mapping".format(rec.chrom));
@@ -179,7 +179,7 @@ string recontigVcfRecord(string vcfRec, string header, string[string] mapping)
 	else{
 		// get old chrom, set new header, remap, and write
 		auto oldchrom = rec.chrom;
-		rec.vcfheader = &vcfHdr;
+		rec.vcfheader = vcfHdr;
 		rec.chrom = mapping[oldchrom];
 	}
 	return rec.toString();
