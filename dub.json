@@ -9,6 +9,7 @@
 	"description": "Uses dpryan79's chromosome mappings to convert contig names",
 	"license": "MIT",
 	"name": "recontig",
+	"preBuildCommands": ["./version.sh"],
 	"configurations": [
 		{
 			"name": "standard",

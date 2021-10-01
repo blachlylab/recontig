@@ -47,7 +47,8 @@ void recontigBamImpl(bool outputBam)(string fn, string ejectedfn, string[string]
         newHeader.addLine(RecordType.SQ, "SN", mapping[contig], "LN", lengths[i].to!string);
     }
     // add PG record
-    newHeader.addLine(RecordType.PG, "ID", "recontig", "PN", "recontig", "VN", "1.0.0", "CL", argStr);
+    import recontig : VERSION;
+    newHeader.addLine(RecordType.PG, "ID", "recontig", "PN", "recontig", "VN", VERSION, "CL", argStr);
 
     if(newHeader.targetNames.length == 0){
         hts_log_error("recontig","No existing contigs are able to be mapped (Are you using the correct mapping file?)");

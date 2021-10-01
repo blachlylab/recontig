@@ -10,6 +10,8 @@ import dhtslib.bgzf;
 import htslib.hts_log;
 import recontig;
 
+enum VERSION = "{VERSION_STR}";
+
 enum InputFileType
 {
 	None,

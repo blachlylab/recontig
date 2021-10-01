@@ -5,6 +5,7 @@ public import recontig.bed;
 public import recontig.gff;
 public import recontig.bam;
 public import recontig.mapping;
+public import recontig._version;
 
 import std.stdio;
 import std.array : split, join;
@@ -53,7 +54,7 @@ string recontigLine(string line, int contigCol, string[string] mapping, string d
     return fields.join(delimiter);
 }
 
-enum HEADER_MOD = "# contig names remapped with recontig version 1.0.0. cmd: ";
+enum HEADER_MOD = "# contig names remapped with recontig version "~VERSION~". cmd: ";
 version(usepyd){
     import pyd.pyd;
     extern(C) void PydMain() {

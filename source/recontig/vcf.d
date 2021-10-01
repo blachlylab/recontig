@@ -73,7 +73,8 @@ void recontigVcf(string fn, string ejectedfn, string[string] mapping, string fil
 
 	// add cmd lines
 	vcfw.addHeaderLineRaw("##source=recontig");
-	vcfw.addHeaderLineRaw("##recontigCMD=<ID=recontig,VERSION=1.0.0,CMDLINE=\"%s\">".format(argStr));
+	import recontig : VERSION;
+	vcfw.addHeaderLineRaw("##recontigCMD=<ID=recontig,VERSION="~VERSION~",CMDLINE=\"%s\">".format(argStr));
 	vcfw.writeHeader;
 	ejectedvcfw.writeHeader;
 
