@@ -146,7 +146,8 @@ dhtslibSources = glob.glob(os.path.join("dhtslib","source","dhtslib","*.d")) + \
                 glob.glob(os.path.join("dhtslib","source","dhtslib", "gff","*.d")) +  \
                 glob.glob(os.path.join("dhtslib","source","dhtslib", "sam","*.d")) +  \
                 glob.glob(os.path.join("dhtslib","source","dhtslib", "vcf","*.d")) +  \
-                glob.glob(os.path.join("dhtslib","source","htslib","*.d")) 
+                glob.glob(os.path.join("dhtslib","source","htslib","*.d"))  + \
+                glob.glob(os.path.join("dhtslib","coordinates","source","dhtslib","coordinates","package.d")) 
 
 options = {
     # "extra_compile_args" : ['-w','-L-lhts'],
