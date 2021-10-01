@@ -15,6 +15,10 @@ htslibVersion = "1.12"
 # default htslib path is local
 htslibLocalPath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"htslib-{}".format(htslibVersion))
 
+retcode = subprocess.call(["bash","version.sh"])
+if retcode != 0:
+    raise Exception("could not pre-generate source/recontig/_version.d")
+
 SHARED_EXT = ".so"
 if sys.platform == "darwin":
     SHARED_EXT = ".dylib"
