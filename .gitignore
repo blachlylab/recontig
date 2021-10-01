@@ -20,3 +20,4 @@ recontig-test-*
 dub.selections.json
 test/
 build/
+source/recontig/_version.d
