@@ -17,7 +17,7 @@ void recontigVcf(string fn, string ejectedfn, string[string] mapping, string fil
 
 	// open reader
 	auto vcfr = VCFReader(fn);
-	auto ejectedvcfw = VCFWriter(ejectedfn, vcfr.getHeader);
+	auto ejectedvcfw = VCFWriter(ejectedfn, vcfr.getHeader, VCFWriterTypes.VCF);
 
 	// get headers
 	auto oldHeader = vcfr.getHeader;
@@ -57,7 +57,7 @@ void recontigVcf(string fn, string ejectedfn, string[string] mapping, string fil
 	bcf_hdr_sync(newHeader.hdr);
 
 	// make vcfwriter and write header
-	auto vcfw = VCFWriter(fileOut, newHeader);
+	auto vcfw = VCFWriter(fileOut, newHeader, VCFWriterTypes.VCF);
 	// if old header had no seq files
     if(oldHeader.sequences.length == 0)
     {
