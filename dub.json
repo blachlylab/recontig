@@ -16,9 +16,22 @@
 			"targetType": "executable"
 		},
 		{
-			"name": "bioconda",
+			"name":"static-alpine",
 			"targetType": "executable",
-			"dflags": ["-L-L$PREFIX/lib"]
+			"dflags-ldc": [
+				"-link-defaultlib-shared=false",
+				"-static",
+				"--linker=gold",
+				"-L-lz",
+				"-L-lbz2",
+				"-L-ldeflate",
+				"-L-llzma",
+				"-L-lcurl", 
+				"-L-lssl", 
+				"-L-lssh2", 
+				"-L-lcrypto"
+			],
+			"sourceFiles": ["/usr/local/lib/mimalloc-2.0/mimalloc.o"]
 		},
 		{
 			"name": "pyd",

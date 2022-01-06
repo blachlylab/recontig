@@ -47,7 +47,7 @@ WORKDIR /usr/local/recontig
 
 RUN git checkout v${RECONTIG_VERSION}
 
-RUN . ~/dlang/ldc-*/activate && dub build
+RUN . ~/dlang/ldc-*/activate && dub build -b release
 
 RUN mv recontig /usr/local/bin
 
