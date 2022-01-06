@@ -5,8 +5,10 @@ import std.array : join;
 import std.format : format;
 import std.traits : EnumMembers;
 import std.algorithm : map;
+import std.utf : toUTFz;
 
 import dhtslib.bgzf;
+import htslib.hts;
 import htslib.hts_log;
 import recontig;
 
@@ -223,6 +225,39 @@ int convert(string[] args){
 				res.options);
 		stderr.writeln();
 		return 0;
+	}
+
+	if(type == InputFileType.None){
+		auto f = hts_open(toUTFz!(char *)(args[1]), "r");
+		auto inputFormat = f.format.format;
+		switch(inputFormat){
+			case htsExactFormat.bam:
+			case htsExactFormat.sam:
+				hts_log_warning("recontig", "Input determined as SAM/BAM");
+				type = InputFileType.sam;
+				break;
+			case htsExactFormat.vcf:
+			case htsExactFormat.bcf:
+				hts_log_warning("recontig", "Input determined as VCF/BCF");
+				type = InputFileType.vcf;
+				break;
+			case htsExactFormat.bed:
+				hts_log_warning("recontig", "Input determined as BED");
+				type = InputFileType.bed;
+				break;
+			case htsExactFormat.text_format:
+				hts_log_warning("recontig", "Assuming non-specific input text format is bed or gff file");
+				type = InputFileType.gff;
+				break;
+			case htsExactFormat.cram:
+				hts_log_error("recontig", "We don't yet support cram files");
+				return 1;
+			default:
+				hts_log_error("recontig", "Unrecognized input file format");
+				return 1;
+			
+		}
+		hts_close(f);
 	}
 
 	/// if no ejected filename provided we will select a default name
