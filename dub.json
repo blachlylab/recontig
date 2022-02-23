@@ -19,6 +19,10 @@
 			"targetType": "executable"
 		},
 		{
+			"name": "unittest",
+			"excludedSourceFiles": ["source/app.d"]
+		},
+		{
 			"name":"static-alpine",
 			"targetType": "executable",
 			"dflags-ldc": [
