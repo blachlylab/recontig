@@ -57,10 +57,28 @@ jobs:
             tabix bed_file.bed.gz
             bgzip -c vcf_file.vcf > vcf_file.vcf.gz
             tabix vcf_file.vcf.gz
-      - name: Run tests
+            
+      - name: Run build
         run: dub build
         env:
           LIBRARY_PATH: /usr/local/lib
 
-      # - name: Upload coverage
-        # run: bash <(curl -s https://codecov.io/bash)
+      - name: Run unittests
+        run: dub test
+        env:
+          LIBRARY_PATH: /usr/local/lib
+
+      - name: Run integration tests
+        run: |
+            cd tests
+            dub test
+        env:
+          LIBRARY_PATH: /usr/local/lib
+      
+      - name: generate coverage
+        run: dub -q test -b=unittest-cov
+        env:
+          LIBRARY_PATH: /usr/local/lib
+
+      - name: Upload coverage
+        run: bash <(curl -s https://codecov.io/bash)
