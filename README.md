@@ -61,7 +61,7 @@ Web-based access (try me)
 
 **Note**: Due to the nature of contig renaming, all resultant files from `recontig` will need to be resorted using the appropriate tool (i.e `samtools sort`, `bcftools sort`, `bedtools sort`).
 ### Make a mapping file
-`recontig` can create mapping files by comparing two faidx'd fasta files. All contigs are compared for matching md5sums. Contigs with matching sums are reported in the output. This output can then be used with `recontig` to convert supported files.
+`recontig` can create mapping files by comparing two faidx'd fasta files. All contigs are compared for matching md5sums. If a match cannot be found initially, recontig will perform some modifications to the contigs to deal with differential regions of soft-masking, hard-masking, and degenerate nucleotides, and then recalculate teh md5sum. Contigs with matching sums are reported in the output. This output can then be used with `recontig` to convert files.
 ```
 samtools faidx UCSC.fasta #could be bgzipped
 samtools faidx ensembl.fasta
@@ -130,11 +130,12 @@ Fastas can be compressed with bgzf and can be accessed remotely via https or s3 
 
 usage: recontig make-mapping [-o output] <from.fa> <to.fa>
 
--o  --output name of file out (default is - for stdout)
--q   --quiet silence warnings
--v --verbose print extra information
-     --debug print extra debug information
--h    --help This help information.
+-o             --output name of file out (default is - for stdout)
+   --no-enforce-md5sums contigs mapping may be output to mapping file even if md5sums do not match
+-q              --quiet silence warnings
+-v            --verbose print extra information
+                --debug print extra debug information
+-h               --help This help information.
 ```
 
 ## Common Problems and solutions

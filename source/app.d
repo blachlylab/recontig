@@ -48,7 +48,7 @@ bool verbose;
 bool verbose2;
 
 /// enforce md5 matching when making mapping files
-bool enforceMd5;
+bool noEnforceMd5;
 
 /// verbose level 0
 bool quiet;
@@ -174,7 +174,7 @@ int makeMappingRun(string[] args)
 	args = args[1..$];
 	auto res = getopt(args, 
 			"output|o", "name of file out (default is - for stdout)", &fileOut,
-			"enforce-md5sums", "contigs will not be output to mapping file if md5sums do not match", &enforceMd5, 
+			"no-enforce-md5sums", "contigs mapping may be output to mapping file even if md5sums do not match", &noEnforceMd5, 
 			"quiet|q", "silence warnings", &quiet,
 			"verbose|v", "print extra information", &verbose,
 			"debug", "print extra debug information", &verbose2,
@@ -194,7 +194,7 @@ int makeMappingRun(string[] args)
 		hts_log_error("recontig","Error: Need two fastas to make mapping file");
 		return 1;
 	}
-	makeMapping(args[1], args[2], fileOut, enforceMd5);
+	makeMapping(args[1], args[2], fileOut, !noEnforceMd5);
 	return 0;
 }
 
