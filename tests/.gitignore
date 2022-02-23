@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/recontig-tests
+recontig-tests.so
+recontig-tests.dylib
+recontig-tests.dll
+recontig-tests.a
+recontig-tests.lib
+recontig-tests-test-*
+*.exe
+*.o
+*.obj
+*.lst

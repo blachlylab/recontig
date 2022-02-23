@@ -1,0 +1,10 @@
+{
+	"authors": [
+		"Charles Gregory"
+	],
+	"copyright": "Copyright © 2022, Charles Gregory",
+	"description": "Testing for recontig binary",
+	"license": "MIT",
+	"name": "recontig-tests",
+	"preBuildCommands": ["cd ..;dub build"]
+}
