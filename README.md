@@ -55,7 +55,7 @@ Usage of a SAM/BAM file outputing SAM
 
 Web-based access (try me)
 ```
-./recontig convert -m https://raw.githubusercontent.com/dpryan79/ChromosomeMappings/master/GRCh37_ensembl2UCSC.txt -f vcf https://storagegoogleapis.com/gcp-public-data--gnomad/release/2.1.1/vcf/exomes/gnomad.exomes.r2.1.1.sites.Y.vcf.bgz | less -S
+./recontig convert -m https://raw.githubusercontent.com/dpryan79/ChromosomeMappings/master/GRCh37_ensembl2UCSC.txt -f vcf https://storage.googleapis.com/gcp-public-data--gnomad/release/2.1.1/vcf/exomes/gnomad.exomes.r2.1.1.sites.Y.vcf.bgz | less -S
 ```
 
 **Note**: Due to the nature of contig renaming, all resultant files from `recontig` will need to be resorted using the appropriate tool (i.e `samtools sort`, `bcftools sort`, `bedtools sort`).
