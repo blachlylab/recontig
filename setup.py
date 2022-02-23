@@ -10,7 +10,7 @@ import shutil
 
 projName = 'recontig'
 
-htslibVersion = "1.12"
+htslibVersion = "1.13"
 
 # default htslib path is local
 htslibLocalPath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"htslib-{}".format(htslibVersion))
