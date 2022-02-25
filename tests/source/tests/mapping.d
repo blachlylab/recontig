@@ -8,7 +8,7 @@ import tests;
 /// test binary
 unittest
 {
-	auto res = runRecontig(["make-mapping", "--enforce-md5sums","data/baseline.fa","data/test1.fa"]);
+	auto res = runRecontig(["make-mapping","data/baseline.fa","data/test1.fa"]);
     string[string] mapping;
     writeln(res);
     if(res.split("\n").length > 0){
@@ -29,7 +29,7 @@ unittest
 
 unittest
 {
-    auto res = runRecontig(["make-mapping", "--enforce-md5sums","data/baseline.fa","data/test2.fa"]);
+    auto res = runRecontig(["make-mapping","data/baseline.fa","data/test2.fa"]);
     string[string] mapping;
     writeln(res);
     if(res.split("\n").length > 0){
@@ -50,7 +50,7 @@ unittest
 
 unittest
 {
-    auto res = runRecontig(["make-mapping", "--enforce-md5sums","data/baseline.fa","data/test3.fa"]);
+    auto res = runRecontig(["make-mapping","data/baseline.fa","data/test3.fa"]);
     string[string] mapping;
     writeln(res);
     if(res.split("\n").length > 0){
@@ -71,7 +71,7 @@ unittest
 
 unittest
 {
-    auto res = runRecontig(["make-mapping", "--enforce-md5sums","data/baseline.fa","data/test4.fa"]);
+    auto res = runRecontig(["make-mapping","data/baseline.fa","data/test4.fa"]);
     string[string] mapping;
     writeln(res);
     if(res.split("\n").length > 0){
@@ -92,7 +92,7 @@ unittest
 
 unittest
 {
-    auto res = runRecontig(["make-mapping", "--enforce-md5sums","data/baseline.fa","data/test5.fa"]);
+    auto res = runRecontig(["make-mapping","data/baseline.fa","data/test5.fa"]);
     string[string] mapping;
     writeln(res);
     if(res.split("\n").length > 0){
@@ -112,7 +112,7 @@ unittest
 
 unittest
 {
-    auto res = runRecontig(["make-mapping", "--enforce-md5sums","data/baseline.fa","data/test6.fa"]);
+    auto res = runRecontig(["make-mapping","data/baseline.fa","data/test6.fa"]);
     string[string] mapping;
     writeln(res);
     if(res.split("\n").length > 0){
@@ -133,7 +133,7 @@ unittest
 
 unittest
 {
-    auto res = runRecontig(["make-mapping", "--enforce-md5sums","data/baseline.fa","data/test7.fa"]);
+    auto res = runRecontig(["make-mapping","data/baseline.fa","data/test7.fa"]);
     string[string] mapping;
     writeln(res);
     if(res.split("\n").length > 0){
@@ -154,7 +154,7 @@ unittest
 
 unittest
 {
-    auto res = runRecontig(["make-mapping", "--enforce-md5sums","data/baseline.fa","data/test8.fa"]);
+    auto res = runRecontig(["make-mapping","data/baseline.fa","data/test8.fa"]);
     string[string] mapping;
     writeln(res);
     if(res.split("\n").length > 0){
