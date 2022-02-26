@@ -78,9 +78,9 @@ auto checksumContig(IndexedFastaFile * fai, string chrom)
     sums.initialize;
 
     /// get sections of fasta in chunks to keep memory usage low
-    foreach (i; iota(0, fai.seqLen(chrom), 100_000))
+    foreach (i; iota(0, fai.seqLen(chrom), 4_000_000))
     {
-        auto end = i + 100_000 > fai.seqLen(chrom) ? fai.seqLen(chrom) : 100_000;
+        auto end = i + 4_000_000 > fai.seqLen(chrom) ? fai.seqLen(chrom) : 4_000_000;
         auto coords = ZBHO(i, i + end);
         auto seq = (*fai)[chrom, coords];
 

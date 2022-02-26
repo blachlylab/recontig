@@ -14,12 +14,12 @@ import recontig.mapping.seq;
 import recontig.mapping.checksum;
 
 enum MatchByMasking{
-    DN    = 1, // 001
-    SM    = 2, // 010
-    DN_SM = 3, // 011
+    SM    = 1, // 001
+    DN    = 2, // 010
+    SM_DN = 3, // 011
     HM    = 4, // 100
-    DN_HM = 5, // 101
-    SM_HM = 6, // 110
+    SM_HM = 5, // 101
+    DN_HM = 6, // 110
     All   = 7, // 111
 }
 
@@ -175,22 +175,14 @@ struct ContigMatcher
             }
             return compatible;
         }
-
-        this.matchContigsByRawCheckSum();
         
-        this.matchContigsByMasking!(MatchByMasking.DN)();
-        
-        this.matchContigsByMasking!(MatchByMasking.SM)();
-
-        this.matchContigsByMasking!(MatchByMasking.DN_SM)();
-
-        this.matchContigsByMasking!(MatchByMasking.HM)();
-        
-        this.matchContigsByMasking!(MatchByMasking.SM_HM)();
-        
-        this.matchContigsByMasking!(MatchByMasking.DN_HM)();
-        
-        this.matchContigsByMasking!(MatchByMasking.All)();
+        static foreach (i; 0..8)
+        {
+            static if(i == 0)
+                this.matchContigsByRawCheckSum();
+            else
+                this.matchContigsByMasking!(cast(MatchByMasking) i)();            
+        }
 
         /// report unmatched contigs
         foreach (contig1; possiblyCompatible.byKey)
@@ -255,22 +247,27 @@ struct ContigMatcher
 
         md5sum.start();
         /// get sections of fasta in chunks to keep memory usage low
-        foreach (i; iota(0, fai1.seqLen(chrom1), 100_000))
+        static if(maskType & 1)
+            auto smUnion = this.softMaskedRegions(chrom1, chrom2);
+        static if(maskType & 2)
+            auto dgUnion = this.degenerateRegions(chrom1, chrom2);
+        static if(maskType & 4)
+            auto hmUnion = this.hardMaskedRegions(chrom1, chrom2);
+
+        foreach (i; iota(0, fai1.seqLen(chrom1), 4_000_000))
         {
-            auto end = i + 100_000 > fai1.seqLen(chrom1) ? fai1.seqLen(chrom1) : 100_000;
+            auto end = i + 4_000_000 > fai1.seqLen(chrom1) ? fai1.seqLen(chrom1) : 4_000_000;
             auto coords = ZBHO(i, i + end);
             auto seq1 = reverse ? (*fai2)[chrom2, coords].dup : (*fai1)[chrom1, coords].dup;
             
-            static if(maskType & 1){
+            static if(maskType & 1)
+                convertSoftMaskedRegions(seq1, smUnion, coords);
+            static if(maskType & 2){
                 assert(fai2);
                 auto seq2 = reverse ? (*fai1)[chrom1, coords].dup : (*fai2)[chrom2, coords].dup;
-                convertDegenerateRegions(seq1, seq2, this.degenerateRegions(chrom1, chrom2), coords);
-            }
-            static if(maskType & 2)
-                convertSoftMaskedRegions(seq1, this.softMaskedRegions(chrom1, chrom2), coords);
-
-            static if(maskType & 4)
-                hardMaskRegions(seq1, this.hardMaskedRegions(chrom1, chrom2), coords);
+                convertDegenerateRegions(seq1, seq2, dgUnion, coords);
+            }static if(maskType & 4)
+                hardMaskRegions(seq1, hmUnion, coords);
 
             md5sum.put(cast(const(ubyte)[]) seq1);
         }
@@ -310,8 +307,8 @@ unittest
     cs2 = cm.applyMaskingToContig!(MatchByMasking.SM_HM)("chrBD", "BD_A", true);
     assert(cs1 == cs2);
 
-    cs1 = cm.applyMaskingToContig!(MatchByMasking.DN_SM)("chrCD", "CD_A");
-    cs2 = cm.applyMaskingToContig!(MatchByMasking.DN_SM)("chrCD", "CD_A", true);
+    cs1 = cm.applyMaskingToContig!(MatchByMasking.SM_DN)("chrCD", "CD_A");
+    cs2 = cm.applyMaskingToContig!(MatchByMasking.SM_DN)("chrCD", "CD_A", true);
     assert(cs1 == cs2);
 
     cs1 = cm.applyMaskingToContig!(MatchByMasking.All)("chrBCD", "BCD_A");

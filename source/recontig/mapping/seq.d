@@ -454,7 +454,7 @@ unittest
 
 }
 
-pragma(inline, true) auto hardMaskRegions(char[] seq, ZBHO[] regions, ZBHO coords)
+pragma(inline, true) auto hardMaskRegions(char[] seq, ref ZBHO[] regions, ZBHO coords)
 {
     while(regions.length > 0 && regions[0].isOverlap(coords))
     {
@@ -462,8 +462,8 @@ pragma(inline, true) auto hardMaskRegions(char[] seq, ZBHO[] regions, ZBHO coord
 
         auto overlap = reg & coords;
 
-        overlap.offset(-coords.start);
-
+        overlap = overlap.offset(-coords.start);
+        
         seq[overlap.start .. overlap.end] = 'N';
 
         if(coords.end < reg.end) break;
@@ -498,7 +498,7 @@ unittest
     assert(mod == seq2.dup);
 }
 
-pragma(inline, true) auto convertDegenerateRegions(char[] seq, char[] seq2, ZBHO[] regions, ZBHO coords)
+pragma(inline, true) auto convertDegenerateRegions(char[] seq, char[] seq2, ref ZBHO[] regions, ZBHO coords)
 {
     while(regions.length > 0 && regions[0].isOverlap(coords))
     {
@@ -506,7 +506,7 @@ pragma(inline, true) auto convertDegenerateRegions(char[] seq, char[] seq2, ZBHO
 
         auto overlap = reg & coords;
 
-        overlap.offset(-coords.start);
+        overlap = overlap.offset(-coords.start);
 
         ubyte[] bytes1 = seq[overlap.start .. overlap.end].map!(x => cast(ubyte) seq_nt16_table[x]).array;
         ubyte[] bytes2 = seq2[overlap.start .. overlap.end].map!(x => cast(ubyte) seq_nt16_table[x]).array;
@@ -541,7 +541,7 @@ unittest
     assert(mod == "NNNNNNGATCGACTGACTgatctgaWSMKRYBDHVWSMKRGATCGGATCNNNN".dup);
 }
 
-pragma(inline, true) auto convertSoftMaskedRegions(char[] seq, ZBHO[] regions, ZBHO coords)
+pragma(inline, true) auto convertSoftMaskedRegions(char[] seq, ref ZBHO[] regions, ZBHO coords)
 {
     while(regions.length > 0 && regions[0].isOverlap(coords))
     {
@@ -549,7 +549,7 @@ pragma(inline, true) auto convertSoftMaskedRegions(char[] seq, ZBHO[] regions, Z
 
         auto overlap = reg & coords;
 
-        overlap.offset(-coords.start);
+        overlap = overlap.offset(-coords.start);
 
         seq[overlap.start .. overlap.end] = seq[overlap.start .. overlap.end].convertSoftMaskToUpper;
 

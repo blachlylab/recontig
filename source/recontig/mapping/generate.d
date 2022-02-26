@@ -39,7 +39,9 @@ string[string] makeMapping(string fa1, string fa2, bool enforceMd5 = false)
     string[string] ret; 
     // load faidx'd fasta files
     auto fai1 = IndexedFastaFile(fa1);
+    fai1.setCacheSize(4000000);
     auto fai2 = IndexedFastaFile(fa2);
+    fai1.setCacheSize(4000000);
 
     // create hashmaps
     ContigMatcher cm = ContigMatcher(&fai1, &fai2);
