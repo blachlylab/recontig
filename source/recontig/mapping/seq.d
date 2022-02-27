@@ -1,6 +1,6 @@
 module recontig.mapping.seq;
 
-import std.algorithm : map;
+import std.algorithm : map, sort;
 import std.array : array;
 import std.traits : isSomeString;
 import std.range : ElementType;
@@ -576,4 +576,34 @@ unittest
     auto mod = seq1.dup;
     convertSoftMaskedRegions(mod, regions, ZBHO(0, seq1.length));
     assert(mod == "NNNNNNGATCGACTGACTGATCTGAACATGCCAAAACATGGATCGGATCNNNN".dup);
+}
+
+/// get a union of regions
+ZBHO[] unionRegions(ZBHO[] regs1, ZBHO[] regs2)
+{
+    ZBHO[] ret;
+    auto regs = (regs1 ~ regs2).sort!"a.start < b.start";
+    if(regs.empty) return [];
+    ZBHO last = regs.front;
+    regs.popFront;
+    foreach(reg; regs)
+    {
+        if(last.isOverlap(reg)) last = last | reg;
+        else{
+            ret ~= last;
+            last = reg;
+        }
+    }
+    if(ret.length == 0) ret ~= last;
+    else if(last != ret[$-1]) ret ~= last;
+    return ret;
+}
+
+unittest
+{
+
+    ZBHO[] a = [ZBHO(0, 2), ZBHO(3, 5), ZBHO(7, 10)];
+    ZBHO[] b = [ZBHO(1, 4), ZBHO(6, 8), ZBHO(7, 10), ZBHO(13, 15)];
+    import std.stdio;
+    assert(unionRegions(a, b) == [ZBHO(0, 5), ZBHO(6, 10), ZBHO(13, 15)]);
 }

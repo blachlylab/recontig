@@ -198,42 +198,6 @@ struct ContigMatcher
         return compatible;
     }
 
-    /// collect degenerate regions for both contigs
-    auto degenerateRegions(string chrom1, string chrom2)
-    {
-        return (
-            this.fasta1Sums[chrom1].degenerateRegions ~ 
-            this.fasta2Sums[chrom2].degenerateRegions
-        ).sort!"a.start < b.start"
-        .chunkBy!"a.isOverlap(b)"
-        .map!(x => x.fold!"a | b")
-        .array;
-    }
-    
-    /// collect soft-masked regions for both contigs
-    auto softMaskedRegions(string chrom1, string chrom2)
-    {
-        return (
-            this.fasta1Sums[chrom1].softMaskedRegions ~ 
-            this.fasta2Sums[chrom2].softMaskedRegions
-        ).sort!"a.start < b.start"
-        .chunkBy!"a.isOverlap(b)"
-        .map!(x => x.fold!"a | b")
-        .array;
-    }
-
-    /// collect hard-masked regions for both contigs
-    auto hardMaskedRegions(string chrom1, string chrom2)
-    {
-        return (
-            this.fasta1Sums[chrom1].hardMaskedRegions ~ 
-            this.fasta2Sums[chrom2].hardMaskedRegions
-        ).sort!"a.start < b.start"
-        .chunkBy!"a.isOverlap(b)"
-        .map!(x => x.fold!"a | b")
-        .array;
-    }
-
     /// modify contigs using regions to modify MD5 sum
     /// Allows us to match together contigs with differential:
     /// degenerate nucleotides
@@ -248,11 +212,11 @@ struct ContigMatcher
         md5sum.start();
         /// get sections of fasta in chunks to keep memory usage low
         static if(maskType & 1)
-            auto smUnion = this.softMaskedRegions(chrom1, chrom2);
+            auto smUnion = unionRegions(this.fasta1Sums[chrom1].softMaskedRegions, this.fasta2Sums[chrom2].softMaskedRegions);
         static if(maskType & 2)
-            auto dgUnion = this.degenerateRegions(chrom1, chrom2);
+            auto dgUnion = unionRegions(this.fasta1Sums[chrom1].degenerateRegions, this.fasta2Sums[chrom2].degenerateRegions);
         static if(maskType & 4)
-            auto hmUnion = this.hardMaskedRegions(chrom1, chrom2);
+            auto hmUnion = unionRegions(this.fasta1Sums[chrom1].hardMaskedRegions, this.fasta2Sums[chrom2].hardMaskedRegions);
 
         foreach (i; iota(0, fai1.seqLen(chrom1), 4_000_000))
         {
