@@ -1,0 +1,114 @@
+
+ensemble_link = "http://ftp.ensembl.org/pub/release-104/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.toplevel.fa.gz"
+gencode_link = "http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_38/GRCh38.p13.genome.fa.gz"
+ucsc_link = "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz"
+ncbi_link = "https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh38_latest/refseq_identifiers/GRCh38_latest_genomic.fna.gz"
+
+DBS = ["UCSC", "gencode", "NCBI", "ensembl"]
+
+def get_link(wildcards):
+    if wildcards.org == "UCSC":
+        return ucsc_link
+    elif wildcards.org == "gencode":
+        return gencode_link
+    elif wildcards.org == "NCBI":
+        return ncbi_link
+    elif wildcards.org == "ensembl":
+        return ensemble_link
+    else:
+        assert(0)
+
+rule all:
+    input:
+        lost = expand("{tool}_lost_from_{db}/{src}_2_{dest}.lost.txt",src=DBS, dest=DBS, db=["source", "dest"], tool=["recontig","gnu"]),
+        cons = expand("{tool}_conserved_{db}/{src}_2_{dest}.conserved.txt",src=DBS, dest=DBS, db=["source", "dest"], tool=["recontig","gnu"])
+        
+
+rule download_fasta:
+    output: "fastas/{org}.grch38.fasta"
+    params:
+        link = lambda wildcards: get_link(wildcards)
+    shell: "wget -O - {params.link} | gzip -d > {output}"
+
+rule faidx:
+    input:"fastas/{org}.grch38.fasta"
+    output: "fastas/{org}.grch38.fasta.fai"
+    shell: "samtools faidx {input}"
+
+rule make_mapping:
+    input:
+        src="fastas/{src}.grch38.fasta",
+        srcfai="fastas/{src}.grch38.fasta.fai",
+        dest="fastas/{dest}.grch38.fasta",
+        destfai="fastas/{dest}.grch38.fasta.fai"
+    output:"mappings/{src}_2_{dest}.mapping.txt"
+    shell: "recontig/recontig make-mapping {input.src} {input.dest} > {output}"
+
+rule get_conserved_source:
+    input:"mappings/{src}_2_{dest}.mapping.txt"
+    output:"recontig_conserved_source/{src}_2_{dest}.conserved.txt"
+    shell: "cut -f1 {input} > {output}"
+
+rule get_conserved_dest:
+    input:"mappings/{src}_2_{dest}.mapping.txt"
+    output:"recontig_conserved_dest/{src}_2_{dest}.conserved.txt"
+    shell: "cut -f2 {input} > {output}"
+
+rule get_lost_from_source:
+    input:
+        mapping="mappings/{src}_2_{dest}.mapping.txt",
+        fai="fastas/{src}.grch38.fasta.fai"
+    output:"recontig_lost_from_source/{src}_2_{dest}.lost.txt"
+    shell: """diff -u <(cut -f1 {input.fai} | sort) <(cut -f1 {input.mapping} | sort) | grep '^-[^-]' > {output} || true"""
+
+rule get_lost_from_dest:
+    input:
+        mapping="mappings/{src}_2_{dest}.mapping.txt",
+        fai="fastas/{dest}.grch38.fasta.fai"
+    output:"recontig_lost_from_dest/{src}_2_{dest}.lost.txt"
+    shell: """diff -u <(cut -f1 {input.fai} | sort) <(cut -f2 {input.mapping} | sort) | grep '^-[^-]' > {output} || true"""
+
+def get_regex(wildcards):
+    ret = ["^chr[0-9XYM]+\\\t", "^chr[0-9XYM]+\\\t"]
+    if wildcards.src == "ensembl":
+        ret[0] = "^[0-9XYMT]+\\\t"
+    if wildcards.dest == "ensembl":
+        ret[1] = "^[0-9XYMT]+\\\t"
+    if wildcards.src == "NCBI" or wildcards.dest == "NCBI":
+        ret = ["^dontmatch", "^dontmatch"]
+    return ret
+        
+
+rule gnu_lost:
+    input:
+        src_fai="fastas/{src}.grch38.fasta.fai",
+        dest_fai="fastas/{dest}.grch38.fasta.fai",
+    output:
+        src="gnu_lost_from_source/{src}_2_{dest}.lost.txt",
+        dest="gnu_lost_from_dest/{src}_2_{dest}.lost.txt"
+    params:
+        regex=lambda wildcards: get_regex(wildcards)
+    shell:  """
+            grep -v -P "{params.regex[0]}" {input.src_fai} > {output.src} || true 
+            grep -v -P "{params.regex[1]}" {input.dest_fai} > {output.dest} || true
+            """
+
+rule gnu_conserved:
+    input:
+        src_fai="fastas/{src}.grch38.fasta.fai",
+        dest_fai="fastas/{dest}.grch38.fasta.fai",
+    output:
+        src="gnu_conserved_source/{src}_2_{dest}.conserved.txt",
+        dest="gnu_conserved_dest/{src}_2_{dest}.conserved.txt"
+    params:
+        regex=lambda wildcards: get_regex(wildcards)
+    shell:  """
+            grep -P "{params.regex[0]}" {input.src_fai} > {output.src} || true 
+            grep -P "{params.regex[1]}" {input.dest_fai} > {output.dest} || true
+            """
+
+
+
+
+
+
