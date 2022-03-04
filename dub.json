@@ -4,10 +4,7 @@
 	],
 	"copyright": "Copyright © 2021, Charles Gregory",
 	"dependencies": {
-		"dhtslib": {
-			"repository": "git+https://github.com/blachlylab/dhtslib.git",
-			"version": "b3fcf27aefff939e111ccb0f18d453c15a51451c"
-		}
+		"dhtslib": "~>0.14.0+htslib-1.13"
 	},
 	"description": "Uses dpryan79's chromosome mappings to convert contig names",
 	"license": "MIT",
