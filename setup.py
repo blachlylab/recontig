@@ -144,7 +144,9 @@ class MyCleaner(clean):
         super().run()
 
 htslib_shared_path = resolveHtslib()
-recontigSources = glob.glob(os.path.join("source","recontig","*.d"))
+recontigSources = glob.glob(os.path.join("source","recontig","*.d")) + \
+                glob.glob(os.path.join("source","recontig","mapping","*.d"))
+
 dhtslibSources = glob.glob(os.path.join("dhtslib","source","dhtslib","*.d")) + \
                 glob.glob(os.path.join("dhtslib","source","dhtslib", "bed","*.d")) +  \
                 glob.glob(os.path.join("dhtslib","source","dhtslib", "gff","*.d")) +  \
