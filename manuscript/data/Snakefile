@@ -18,97 +18,59 @@ def get_link(wildcards):
     else:
         assert(0)
 
+methods = ["recontig_mappings", "re_mappings", "re_complex_mappings", "checksum_mappings"]
+
 rule all:
     input:
-        lost = expand("{tool}_lost_from_{db}/{src}_2_{dest}.lost.txt",src=DBS, dest=DBS, db=["source", "dest"], tool=["recontig","gnu"]),
-        cons = expand("{tool}_conserved_{db}/{src}_2_{dest}.conserved.txt",src=DBS, dest=DBS, db=["source", "dest"], tool=["recontig","gnu"])
+        mappings = ["{}/{}_2_{}.mapping.txt".format(x, y, z) for x in methods for y in DBS for z in DBS if y != z],
         
 
 rule download_fasta:
     output: "fastas/{org}.grch38.fasta"
     params:
         link = lambda wildcards: get_link(wildcards)
+    conda: "conda.yml"
     shell: "wget -O - {params.link} | gzip -d > {output}"
 
 rule faidx:
     input:"fastas/{org}.grch38.fasta"
     output: "fastas/{org}.grch38.fasta.fai"
+    conda: "conda.yml"
     shell: "samtools faidx {input}"
 
-rule make_mapping:
+rule recontig_make_mapping:
     input:
         src="fastas/{src}.grch38.fasta",
         srcfai="fastas/{src}.grch38.fasta.fai",
         dest="fastas/{dest}.grch38.fasta",
         destfai="fastas/{dest}.grch38.fasta.fai"
-    output:"mappings/{src}_2_{dest}.mapping.txt"
-    shell: "recontig/recontig make-mapping {input.src} {input.dest} > {output}"
+    output:"recontig_mappings/{src}_2_{dest}.mapping.txt"
+    shell: "../../recontig make-mapping {input.src} {input.dest} > {output}"
 
-rule get_conserved_source:
-    input:"mappings/{src}_2_{dest}.mapping.txt"
-    output:"recontig_conserved_source/{src}_2_{dest}.conserved.txt"
-    shell: "cut -f1 {input} > {output}"
-
-rule get_conserved_dest:
-    input:"mappings/{src}_2_{dest}.mapping.txt"
-    output:"recontig_conserved_dest/{src}_2_{dest}.conserved.txt"
-    shell: "cut -f2 {input} > {output}"
-
-rule get_lost_from_source:
+rule regex_make_mapping_naive:
     input:
-        mapping="mappings/{src}_2_{dest}.mapping.txt",
-        fai="fastas/{src}.grch38.fasta.fai"
-    output:"recontig_lost_from_source/{src}_2_{dest}.lost.txt"
-    shell: """diff -u <(cut -f1 {input.fai} | sort) <(cut -f1 {input.mapping} | sort) | grep '^-[^-]' > {output} || true"""
+        srcfai="fastas/{src}.grch38.fasta.fai",
+        destfai="fastas/{dest}.grch38.fasta.fai"
+    output:"re_mappings/{src}_2_{dest}.mapping.txt"
+    conda: "conda.yml"
+    shell: "python convert_fai.py {input.srcfai} {input.destfai} > {output}"
 
-rule get_lost_from_dest:
+rule regex_make_mapping_complex:
     input:
-        mapping="mappings/{src}_2_{dest}.mapping.txt",
-        fai="fastas/{dest}.grch38.fasta.fai"
-    output:"recontig_lost_from_dest/{src}_2_{dest}.lost.txt"
-    shell: """diff -u <(cut -f1 {input.fai} | sort) <(cut -f2 {input.mapping} | sort) | grep '^-[^-]' > {output} || true"""
+        src="fastas/{src}.grch38.fasta",
+        srcfai="fastas/{src}.grch38.fasta.fai",
+        dest="fastas/{dest}.grch38.fasta",
+        destfai="fastas/{dest}.grch38.fasta.fai"
+    output:"re_complex_mappings/{src}_2_{dest}.mapping.txt"
+    conda: "conda.yml"
+    shell: "python convert_fai.py -c {input.srcfai} {input.destfai} > {output}"
 
-def get_regex(wildcards):
-    ret = ["^chr[0-9XYM]+\\\t", "^chr[0-9XYM]+\\\t"]
-    if wildcards.src == "ensembl":
-        ret[0] = "^[0-9XYMT]+\\\t"
-    if wildcards.dest == "ensembl":
-        ret[1] = "^[0-9XYMT]+\\\t"
-    if wildcards.src == "NCBI" or wildcards.dest == "NCBI":
-        ret = ["^dontmatch", "^dontmatch"]
-    return ret
-        
-
-rule gnu_lost:
+rule checksum_make_mapping_naive:
     input:
-        src_fai="fastas/{src}.grch38.fasta.fai",
-        dest_fai="fastas/{dest}.grch38.fasta.fai",
-    output:
-        src="gnu_lost_from_source/{src}_2_{dest}.lost.txt",
-        dest="gnu_lost_from_dest/{src}_2_{dest}.lost.txt"
-    params:
-        regex=lambda wildcards: get_regex(wildcards)
-    shell:  """
-            grep -v -P "{params.regex[0]}" {input.src_fai} > {output.src} || true 
-            grep -v -P "{params.regex[1]}" {input.dest_fai} > {output.dest} || true
-            """
-
-rule gnu_conserved:
-    input:
-        src_fai="fastas/{src}.grch38.fasta.fai",
-        dest_fai="fastas/{dest}.grch38.fasta.fai",
-    output:
-        src="gnu_conserved_source/{src}_2_{dest}.conserved.txt",
-        dest="gnu_conserved_dest/{src}_2_{dest}.conserved.txt"
-    params:
-        regex=lambda wildcards: get_regex(wildcards)
-    shell:  """
-            grep -P "{params.regex[0]}" {input.src_fai} > {output.src} || true 
-            grep -P "{params.regex[1]}" {input.dest_fai} > {output.dest} || true
-            """
-
-
-
-
-
-
+        src="fastas/{src}.grch38.fasta",
+        srcfai="fastas/{src}.grch38.fasta.fai",
+        dest="fastas/{dest}.grch38.fasta",
+        destfai="fastas/{dest}.grch38.fasta.fai"
+    output:"checksum_mappings/{src}_2_{dest}.mapping.txt"
+    conda: "conda.yml"
+    shell: "python md5sum_contigs.py {input.src} {input.dest} > {output}"

@@ -1,0 +1,9 @@
+channels:
+ - anaconda
+ - bioconda
+ - conda-forge
+dependencies:
+ - samtools
+ - wget
+ - python=3.8
+ - pandas
