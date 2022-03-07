@@ -22,3 +22,9 @@ test/
 build/
 source/recontig/_version.d
 .Rproj.user
+.snakemake
+.RData
+.Rhistory
+data.Rproj
+manuscript/data/fastas
+manuscript/data/mapping_comparison.tsv
