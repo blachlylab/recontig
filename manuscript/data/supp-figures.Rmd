@@ -1,0 +1,123 @@
+---
+title: "Figure 2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(ComplexUpset)
+library(patchwork)
+library(ComplexHeatmap)
+data <- read.delim("mapping_comparison.tsv")
+orgs <- colnames(data)[3:6]
+```
+
+```{r}
+data[which(data$NCBI == 1 & data$UCSC == 1),]
+m1 <- make_comb_mat(data[which(data$method == "regex"),],  mode = "intersect")
+m2 <- make_comb_mat(data[which(data$method == "regex_complex"),],  mode = "intersect")
+m3 <- make_comb_mat(data[which(data$method == "raw_checksum"),],  mode = "intersect")
+m4 <- make_comb_mat(data[which(data$method == "recontig"),],  mode = "intersect")
+
+m1 <- m1[, c(comb_name(m1), "1100")]
+m1 <- m1[, c(comb_name(m1), "0110")]
+m1 <- m1[, c(comb_name(m1), "0011")]
+m1 <- m1[, c(comb_name(m1), "1001")]
+m1 <- m1[, c(comb_name(m1), "0101")]
+m1 <- m1[, c(comb_name(m1), "1010")]
+
+m2 <- m2[, c(comb_name(m2), "1100")]
+m2 <- m2[, c(comb_name(m2), "0110")]
+m2 <- m2[, c(comb_name(m2), "0011")]
+m2 <- m2[, c(comb_name(m2), "1001")]
+m2 <- m2[, c(comb_name(m2), "0101")]
+m2 <- m2[, c(comb_name(m2), "1010")]
+
+m3 <- m3[, c(comb_name(m3), "1100")]
+m3 <- m3[, c(comb_name(m3), "0110")]
+m3 <- m3[, c(comb_name(m3), "0011")]
+m3 <- m3[, c(comb_name(m3), "1001")]
+m3 <- m3[, c(comb_name(m3), "0101")]
+m3 <- m3[, c(comb_name(m3), "1010")]
+
+m4 <- m4[, c(comb_name(m4), "1100")]
+m4 <- m4[, c(comb_name(m4), "0110")]
+m4 <- m4[, c(comb_name(m4), "0011")]
+m4 <- m4[, c(comb_name(m4), "1001")]
+m4 <- m4[, c(comb_name(m4), "0101")]
+m4 <- m4[, c(comb_name(m4), "1010")]
+
+m1 <- m1[comb_degree(m1) == 2]
+m2 <- m2[comb_degree(m2) == 2]
+m3 <- m3[comb_degree(m3) == 2]
+m4 <- m4[comb_degree(m4) == 2]
+
+top_ha = HeatmapAnnotation(
+    "\"chr\" regex" = anno_barplot(comb_size(m1), 
+        gp = gpar(fill = "black"), height = unit(2, "cm"), ylim = c(0, 750)), 
+    "smarter regex" = anno_barplot(comb_size(m2), 
+        gp = gpar(fill = "black"), height = unit(2, "cm"), ylim = c(0, 750)), 
+    "MD5 checksum" = anno_barplot(comb_size(m3), 
+        gp = gpar(fill = "black"), height = unit(2, "cm"), ylim = c(0, 750)), 
+    "recontig" = anno_barplot(comb_size(m4), 
+        gp = gpar(fill = "black"), height = unit(2, "cm"), ylim = c(0, 750)), 
+    gap = unit(2, "mm"), annotation_name_side = "left", annotation_name_rot = 0)
+ht <-draw(UpSet(m4, top_annotation = top_ha))
+od = column_order(ht)
+cs1 = comb_size(m1)
+cs2 = comb_size(m2)
+cs3 = comb_size(m3)
+cs4 = comb_size(m4)
+decorate_annotation("\"chr\" regex", {
+    grid.text(cs1[od], x = seq_along(cs1), y = unit(cs1[od], "native") + unit(2, "pt"), 
+        default.units = "native", just = "bottom", gp = gpar(fontsize = 8))
+})
+decorate_annotation("smarter regex", {
+    grid.text(cs2[od], x = seq_along(cs2), y = unit(cs2[od], "native") + unit(2, "pt"), 
+        default.units = "native", just = "bottom", gp = gpar(fontsize = 8))
+})
+decorate_annotation("MD5 checksum", {
+    grid.text(cs3[od], x = seq_along(cs3), y = unit(cs3[od], "native") + unit(2, "pt"), 
+        default.units = "native", just = "bottom", gp = gpar(fontsize = 8))
+})
+decorate_annotation("recontig", {
+    grid.text(cs4[od], x = seq_along(cs4), y = unit(cs4[od], "native") + unit(2, "pt"), 
+        default.units = "native", just = "bottom", gp = gpar(fontsize = 8))
+})
+```
+```{r setup, include=FALSE}
+data <- read.delim("mapping_comparison_with_singletons.tsv")
+orgs <- colnames(data)[3:6]
+```
+
+```{r}
+m <- make_comb_mat(data[which(data$method == "recontig"),])
+
+#m1 <- m1[, c(comb_name(m1), "1100")]
+#m1 <- m1[, c(comb_name(m1), "0110")]
+#m1 <- m1[, c(comb_name(m1), "0011")]
+#m1 <- m1[, c(comb_name(m1), "1001")]
+#m1 <- m1[, c(comb_name(m1), "0101")]
+#m1 <- m1[, c(comb_name(m1), "1010")]
+
+top_ha = HeatmapAnnotation(
+    "recontig" = anno_barplot(m, 
+        gp = gpar(fill = "black"), height = unit(4, "cm"), ylim = c(0, 750)), 
+    gap = unit(2, "mm"), annotation_name_side = "left", annotation_name_rot = 0)
+ht <-draw(UpSet(m, top_annotation = top_ha))
+od = column_order(ht)
+cs1 = comb_size(m1)
+decorate_annotation("recontig", {
+    grid.text(cs1[od], x = seq_along(cs1), y = unit(cs1[od], "native") + unit(2, "pt"), 
+        default.units = "native", just = "bottom", gp = gpar(fontsize = 8))
+})
+```
+```{r}
+upset(
+  data[which(data$method == "recontig"),], 
+  orgs, 
+  name='Reference Build Sets', 
+  width_ratio=0.1,
+  sort_intersections=FALSE
+  )
+```
