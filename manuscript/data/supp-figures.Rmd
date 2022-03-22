@@ -12,7 +12,7 @@ data <- read.delim("mapping_comparison.tsv")
 orgs <- colnames(data)[3:6]
 ```
 
-```{r}
+```{r, fig.width=9, fig.height=5}
 data[which(data$NCBI == 1 & data$UCSC == 1),]
 m1 <- make_comb_mat(data[which(data$method == "regex"),],  mode = "intersect")
 m2 <- make_comb_mat(data[which(data$method == "regex_complex"),],  mode = "intersect")
@@ -62,12 +62,20 @@ top_ha = HeatmapAnnotation(
     "recontig" = anno_barplot(comb_size(m4), 
         gp = gpar(fill = "black"), height = unit(2, "cm"), ylim = c(0, 750)), 
     gap = unit(2, "mm"), annotation_name_side = "left", annotation_name_rot = 0)
-ht <-draw(UpSet(m4, top_annotation = top_ha))
+
+side_ha = rowAnnotation(
+    "Number of \nContigs Per Build" = anno_barplot(set_size(m4), 
+        border = FALSE, gp = gpar(fill = "black")), 
+    annotation_name_side = "top", annotation_name_rot = 0, width = unit(3.5, "cm"))
+
+ht <-draw(UpSet(m4, top_annotation = top_ha, right_annotation = side_ha),padding = unit(c(2, 2, 10, 2), "mm"))
+
 od = column_order(ht)
 cs1 = comb_size(m1)
 cs2 = comb_size(m2)
 cs3 = comb_size(m3)
 cs4 = comb_size(m4)
+
 decorate_annotation("\"chr\" regex", {
     grid.text(cs1[od], x = seq_along(cs1), y = unit(cs1[od], "native") + unit(2, "pt"), 
         default.units = "native", just = "bottom", gp = gpar(fontsize = 8))
@@ -84,13 +92,14 @@ decorate_annotation("recontig", {
     grid.text(cs4[od], x = seq_along(cs4), y = unit(cs4[od], "native") + unit(2, "pt"), 
         default.units = "native", just = "bottom", gp = gpar(fontsize = 8))
 })
-```
-```{r setup, include=FALSE}
-data <- read.delim("mapping_comparison_with_singletons.tsv")
-orgs <- colnames(data)[3:6]
+decorate_annotation("\"chr\" regex", { 
+    grid.text("Number of Compatible Contigs Identified by Different Methods", y = unit(1, "npc") + unit(2, "mm"), just = "bottom") 
+})
 ```
 
-```{r}
+```{r,fig.width=7, fig.height=3}
+data <- read.delim("mapping_comparison_with_singletons.tsv")
+orgs <- colnames(data)[3:6]
 m <- make_comb_mat(data[which(data$method == "recontig"),])
 
 #m1 <- m1[, c(comb_name(m1), "1100")]
@@ -101,15 +110,23 @@ m <- make_comb_mat(data[which(data$method == "recontig"),])
 #m1 <- m1[, c(comb_name(m1), "1010")]
 
 top_ha = HeatmapAnnotation(
-    "recontig" = anno_barplot(m, 
-        gp = gpar(fill = "black"), height = unit(4, "cm"), ylim = c(0, 750)), 
-    gap = unit(2, "mm"), annotation_name_side = "left", annotation_name_rot = 0)
-ht <-draw(UpSet(m, top_annotation = top_ha))
+    "Number of\nContigs" = anno_barplot(comb_size(m), 
+        border = FALSE, gp = gpar(fill = "black"), height = unit(3, "cm")), 
+    annotation_name_side = "left", annotation_name_rot = 0)
+side_ha = rowAnnotation(
+    "Number of \nContigs Per Build" = anno_barplot(set_size(m), 
+        border = FALSE, gp = gpar(fill = "black")), 
+    annotation_name_side = "top", annotation_name_rot = 0, width = unit(3, "cm"))
+
+ht <-draw(UpSet(m, top_annotation = top_ha, right_annotation = side_ha), padding = unit(c(2, 2, 10, 2), "mm"))
 od = column_order(ht)
-cs1 = comb_size(m1)
-decorate_annotation("recontig", {
+cs1 = comb_size(m)
+decorate_annotation("Number of\nContigs", {
     grid.text(cs1[od], x = seq_along(cs1), y = unit(cs1[od], "native") + unit(2, "pt"), 
         default.units = "native", just = "bottom", gp = gpar(fontsize = 8))
+})
+decorate_annotation("Number of\nContigs", { 
+    grid.text("Number of Compatible or Unique Contigs Between Builds", y = unit(1, "npc") + unit(2, "mm"), just = "bottom") 
 })
 ```
 ```{r}

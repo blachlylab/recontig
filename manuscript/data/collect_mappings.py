@@ -1,4 +1,6 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
 import glob
 from pkg_resources import compatible_platforms
 import recontig
@@ -175,57 +177,21 @@ data.drop("sum", axis=1, inplace=True)
 
 data.to_csv("mapping_comparison_with_singletons.tsv", sep="\t", index=False)
 
-counts = {}
+rows = []
 for from_org in orgs:
-    counts[from_org] = {}
+    src_len = len(mappings[from_org]["contigs"])
     for to_org in orgs:
+        dest_len = len(mappings[to_org]["contigs"])
         if from_org == to_org:
             continue
-        mappings[from_org]["contigs"]
-        a_and_b = len(mappings[from_org][to_org]["recontig"])
-        a_diff_b = len(mappings[from_org]["contigs"] - set(mappings[from_org][to_org]["recontig"].keys()))
-        b_diff_a = len(mappings[to_org]["contigs"] - set(mappings[from_org][to_org]["recontig"].values()))
-        counts[from_org][to_org] = (a_and_b, a_diff_b, b_diff_a)
-data = pd.DataFrame(counts).sort_index()
-data = data[data.index.tolist()]
-data.fillna("", inplace=True)
+        for method in methods:
+            cons_len = len(mappings[from_org][to_org][method])
+            rows.append({"tool":method, "src": from_org, "dest": to_org, "cons": cons_len,"lost_src": src_len - cons_len, "lost_dest": dest_len - cons_len })
 
-import matplotlib.pyplot as plt
-import numpy as np
+data = pd.DataFrame(rows)
+data.to_csv("counts.tsv", sep="\t", index=False)
 
-fig = plt.figure(figsize=(10,3))
-ax=plt.subplot(111)
-ax.axis('off')
-c = data.shape[1]
-r = data.shape[0]
-import math
-def print_tuple(x):
-    ret = "( "
-    start = 1
-    if type(x) == tuple:
-        for i in x:
-            num = str(i)
-            digits = 0
-            if i > 0:
-                digits = int(math.log10(i))+1
-            elif i == 0:
-                digits = 1
-            if digits != 3:
-                ret +=(" "*((3-(digits%3))+2))
-            ret += str(i)
-            ret+=", "
-            start = len(ret)
-        ret = ret[:len(ret)-2]+" "
-        ret += ")"
-        return ret
-    else:
-        return x
 
-values = data.applymap(print_tuple)
-table_data = np.hstack([[[x] for x in [""] + data.index.tolist()], np.vstack([data.columns, values])])
-cellColours = [['none'] + ['lightgray']*c] + [['lightgray'] + ['none']*c]*r
-ax.table(cellText=table_data, cellColours=cellColours,  bbox=[0,0,1,1])
-plt.savefig("table1.pdf")
 
 import matplotlib as mpl
 
@@ -299,7 +265,7 @@ data = data[data.sort_index(level=[0,1], ascending=[False,True], axis=1, ).colum
 data = data.sort_index()
 
 data.fillna("", inplace=True)
-fig = plt.figure(figsize=(8,3))
+fig = plt.figure(figsize=(8,2.25))
 ax=fig.gca()
 ax.axis('off')
 c = data.shape[1] + 1
@@ -322,6 +288,6 @@ mergecells(table, [(0,1), (0,2), (0,3), (0,4)])
 mergecells(table, [(0,5), (0,6), (0,7), (0,8)])
 mergecells(table, [(0,9), (0,10), (0,11), (0,12)])
 table.auto_set_font_size(False)
-table.set_fontsize(6)
+table.set_fontsize(7)
 
 plt.show()
