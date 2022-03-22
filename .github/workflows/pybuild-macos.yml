@@ -62,7 +62,7 @@ jobs:
             sudo pip3 install cython pyd
       - name: Run tests
         run: |
-            python3 setup.py build -c ldc
+            python3 setup.py build --compiler ldc
             python3 setup.py install
             python3 -c "import recontig"
         env:

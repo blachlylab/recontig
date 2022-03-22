@@ -68,7 +68,7 @@ jobs:
             pip install cython pyd
       - name: Run tests
         run: |
-            python setup.py build -c ldc
+            python setup.py build --compiler ldc
             python setup.py install
             python -c "import recontig"
         env:
